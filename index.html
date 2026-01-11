@@ -1,114 +1,781 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amoranio Example </title>
+    <title>amoran.io - Welcome!</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        * {
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
+            box-sizing: border-box;
         }
 
-        header {
-            background-color: #333;
-            color: #fff;
-            text-align: center;
-            padding: 1em 0;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .profile {
+        body {
+            background-color: #5c94fc;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
             display: flex;
-            justify-content: center;
-            align-items: center;
             flex-direction: column;
-        }
-
-        .profile img {
-            border-radius: 50%;
-            width: 150px;
-        }
-
-        .profile h1 {
-            margin-top: 15px;
-        }
-
-        .projects {
-            margin-top: 30px;
-        }
-
-        .projects h2 {
-            border-bottom: 2px solid #333;
-        }
-
-        .project-card {
-            display: flex;
-            margin-top: 20px;
-            border: 1px solid #e5e5e5;
-            padding: 10px;
             align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            image-rendering: pixelated;
         }
 
-        .project-card img {
-            width: 100px;
-            margin-right: 20px;
+        .game-container {
+            position: relative;
+            border: 8px solid #000;
+            border-radius: 4px;
+            box-shadow: 0 0 0 4px #8b8b8b, 0 0 0 8px #000;
+            background: #5c94fc;
         }
 
-        .project-card h3 {
-            margin: 0;
+        #gameCanvas {
+            display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
         }
 
+        .title {
+            color: #fff;
+            text-shadow: 4px 4px 0 #000;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .instructions {
+            color: #fff;
+            text-shadow: 2px 2px 0 #000;
+            font-size: 10px;
+            margin-top: 20px;
+            text-align: center;
+            line-height: 2;
+        }
+
+        .mobile-controls {
+            display: none;
+            margin-top: 20px;
+            gap: 10px;
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            background: #e52521;
+            border: 4px solid #000;
+            border-radius: 8px;
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #8b0000;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .control-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .d-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(2, 60px);
+            gap: 5px;
+        }
+
+        .d-pad .up { grid-column: 2; grid-row: 1; }
+        .d-pad .left { grid-column: 1; grid-row: 2; }
+        .d-pad .right { grid-column: 3; grid-row: 2; }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .jump-btn {
+            width: 80px;
+            height: 80px;
+            background: #049cd8;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-controls {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                width: 100%;
+                max-width: 400px;
+                padding: 0 20px;
+            }
+
+            .instructions {
+                font-size: 8px;
+            }
+
+            .title {
+                font-size: 16px;
+            }
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            .mobile-controls {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                width: 100%;
+                max-width: 400px;
+                padding: 0 20px;
+            }
+        }
     </style>
 </head>
-
 <body>
+    <h1 class="title">AMORAN.IO</h1>
+    <div class="game-container">
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+    </div>
+    <p class="instructions">
+        Arrow Keys or WASD to move | SPACE or W or UP to jump<br>
+        Hit the blocks from below to visit links!
+    </p>
 
-    <header>
-        <h1>Your Name</h1>
-    </header>
-
-    <div class="container">
-        <section class="profile">
-            <img src="path_to_your_photo.jpg" alt="Your Photo">
-            <h1>Your Full Name</h1>
-            <p>Short Bio about yourself...</p>
-        </section>
-
-        <section class="projects">
-            <h2>My Projects</h2>
-
-            <div class="project-card">
-                <img src="path_to_project1_image.jpg" alt="Project 1 Image">
-                <div>
-                    <h3>Project 1 Title</h3>
-                    <p>Description for project 1...</p>
-                </div>
-            </div>
-
-            <div class="project-card">
-                <img src="path_to_project2_image.jpg" alt="Project 2 Image">
-                <div>
-                    <h3>Project 2 Title</h3>
-                    <p>Description for project 2...</p>
-                </div>
-            </div>
-
-            <!-- Add more project cards as needed... -->
-        </section>
+    <div class="mobile-controls">
+        <div class="d-pad">
+            <button class="control-btn up" id="btnUp">^</button>
+            <button class="control-btn left" id="btnLeft">&lt;</button>
+            <button class="control-btn right" id="btnRight">&gt;</button>
+        </div>
+        <div class="action-buttons">
+            <button class="control-btn jump-btn" id="btnJump">JUMP</button>
+        </div>
     </div>
 
-</body>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
 
+        // Responsive canvas
+        function resizeCanvas() {
+            const maxWidth = Math.min(window.innerWidth - 40, 800);
+            const scale = maxWidth / 800;
+            canvas.style.width = maxWidth + 'px';
+            canvas.style.height = (400 * scale) + 'px';
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Game constants
+        const GRAVITY = 0.6;
+        const JUMP_FORCE = -14;
+        const MOVE_SPEED = 5;
+        const GROUND_HEIGHT = 80;
+
+        // Colors - GBA Mario palette
+        const COLORS = {
+            sky: '#5c94fc',
+            ground: '#c84c0c',
+            groundDark: '#a03800',
+            groundLight: '#e8a060',
+            brick: '#c84c0c',
+            brickDark: '#a03800',
+            questionBlock: '#ffa500',
+            questionBlockDark: '#c87800',
+            questionBlockLight: '#ffdc00',
+            playerRed: '#e52521',
+            playerRedDark: '#8b0000',
+            playerBlue: '#049cd8',
+            playerBlueDark: '#0066a0',
+            playerSkin: '#ffb8a0',
+            playerBrown: '#6b4423',
+            white: '#ffffff',
+            black: '#000000',
+            coin: '#ffdc00'
+        };
+
+        // Links for the boxes
+        const LINKS = {
+            linkedin: 'https://www.linkedin.com/in/ashleymoran',
+            twitter: 'https://x.com/amoranio',
+            github: 'https://github.com/amoranio'
+        };
+
+        // Player object
+        const player = {
+            x: 100,
+            y: canvas.height - GROUND_HEIGHT - 48,
+            width: 32,
+            height: 48,
+            vx: 0,
+            vy: 0,
+            onGround: true,
+            facing: 1, // 1 = right, -1 = left
+            frame: 0,
+            frameTimer: 0
+        };
+
+        // Question blocks
+        const blocks = [
+            {
+                x: 200,
+                y: 180,
+                width: 48,
+                height: 48,
+                hit: false,
+                bobY: 0,
+                link: LINKS.linkedin,
+                label: 'in',
+                icon: 'linkedin'
+            },
+            {
+                x: 376,
+                y: 180,
+                width: 48,
+                height: 48,
+                hit: false,
+                bobY: 0,
+                link: LINKS.twitter,
+                label: 'X',
+                icon: 'twitter'
+            },
+            {
+                x: 552,
+                y: 180,
+                width: 48,
+                height: 48,
+                hit: false,
+                bobY: 0,
+                link: LINKS.github,
+                label: '<>',
+                icon: 'github'
+            }
+        ];
+
+        // Decorative blocks (bricks)
+        const bricks = [];
+        for (let i = 0; i < 3; i++) {
+            bricks.push({ x: blocks[i].x - 48, y: 180, width: 48, height: 48 });
+            bricks.push({ x: blocks[i].x + 48, y: 180, width: 48, height: 48 });
+        }
+
+        // Input handling
+        const keys = {
+            left: false,
+            right: false,
+            jump: false
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
+            if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+                e.preventDefault();
+                keys.jump = true;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+            if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') keys.jump = false;
+        });
+
+        // Mobile controls
+        const btnUp = document.getElementById('btnUp');
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+        const btnJump = document.getElementById('btnJump');
+
+        function addMobileListeners(btn, key) {
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; });
+            btn.addEventListener('mousedown', () => keys[key] = true);
+            btn.addEventListener('mouseup', () => keys[key] = false);
+            btn.addEventListener('mouseleave', () => keys[key] = false);
+        }
+
+        addMobileListeners(btnUp, 'jump');
+        addMobileListeners(btnLeft, 'left');
+        addMobileListeners(btnRight, 'right');
+        addMobileListeners(btnJump, 'jump');
+
+        // Clouds
+        const clouds = [
+            { x: 100, y: 50, size: 1 },
+            { x: 350, y: 80, size: 0.8 },
+            { x: 600, y: 40, size: 1.2 },
+            { x: 750, y: 90, size: 0.7 }
+        ];
+
+        // Draw functions
+        function drawCloud(x, y, size) {
+            ctx.fillStyle = COLORS.white;
+            const s = 20 * size;
+            // Cloud puffs
+            ctx.beginPath();
+            ctx.arc(x, y, s, 0, Math.PI * 2);
+            ctx.arc(x + s * 1.5, y, s * 1.2, 0, Math.PI * 2);
+            ctx.arc(x + s * 3, y, s, 0, Math.PI * 2);
+            ctx.arc(x + s * 0.7, y - s * 0.5, s * 0.8, 0, Math.PI * 2);
+            ctx.arc(x + s * 2.2, y - s * 0.5, s * 0.9, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawGround() {
+            // Main ground
+            ctx.fillStyle = COLORS.ground;
+            ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
+
+            // Ground pattern (bricks)
+            ctx.fillStyle = COLORS.groundDark;
+            for (let x = 0; x < canvas.width; x += 32) {
+                ctx.fillRect(x, canvas.height - GROUND_HEIGHT, 2, GROUND_HEIGHT);
+                ctx.fillRect(x, canvas.height - GROUND_HEIGHT + 16, 32, 2);
+                ctx.fillRect(x, canvas.height - GROUND_HEIGHT + 48, 32, 2);
+            }
+            for (let x = 16; x < canvas.width; x += 32) {
+                ctx.fillRect(x, canvas.height - GROUND_HEIGHT + 32, 2, 32);
+            }
+
+            // Top edge highlight
+            ctx.fillStyle = COLORS.groundLight;
+            ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, 4);
+        }
+
+        function drawBrick(x, y, width, height) {
+            ctx.fillStyle = COLORS.brick;
+            ctx.fillRect(x, y, width, height);
+
+            // Brick pattern
+            ctx.fillStyle = COLORS.brickDark;
+            ctx.fillRect(x, y, width, 2);
+            ctx.fillRect(x, y, 2, height);
+            ctx.fillRect(x + width/2 - 1, y, 2, height/2);
+            ctx.fillRect(x, y + height/2 - 1, width, 2);
+            ctx.fillRect(x + width/4 - 1, y + height/2, 2, height/2);
+            ctx.fillRect(x + width*3/4 - 1, y + height/2, 2, height/2);
+
+            // Highlight
+            ctx.fillStyle = COLORS.groundLight;
+            ctx.fillRect(x + 2, y + 2, width - 4, 2);
+        }
+
+        function drawQuestionBlock(block) {
+            const x = block.x;
+            const y = block.y + block.bobY;
+            const w = block.width;
+            const h = block.height;
+
+            // Block body
+            ctx.fillStyle = block.hit ? '#8b4513' : COLORS.questionBlock;
+            ctx.fillRect(x, y, w, h);
+
+            // Border
+            ctx.fillStyle = COLORS.black;
+            ctx.fillRect(x, y, w, 4);
+            ctx.fillRect(x, y + h - 4, w, 4);
+            ctx.fillRect(x, y, 4, h);
+            ctx.fillRect(x + w - 4, y, 4, h);
+
+            // Inner highlight
+            if (!block.hit) {
+                ctx.fillStyle = COLORS.questionBlockLight;
+                ctx.fillRect(x + 4, y + 4, w - 12, 4);
+                ctx.fillRect(x + 4, y + 4, 4, h - 12);
+
+                // Shadow
+                ctx.fillStyle = COLORS.questionBlockDark;
+                ctx.fillRect(x + w - 8, y + 8, 4, h - 12);
+                ctx.fillRect(x + 8, y + h - 8, w - 12, 4);
+            }
+
+            // Draw icon/label
+            ctx.fillStyle = block.hit ? '#5c3d1e' : COLORS.white;
+            ctx.font = 'bold 16px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            if (block.icon === 'linkedin') {
+                ctx.fillText('in', x + w/2, y + h/2);
+            } else if (block.icon === 'twitter') {
+                ctx.fillText('X', x + w/2, y + h/2);
+            } else if (block.icon === 'github') {
+                // Draw a simple code bracket icon
+                ctx.font = 'bold 14px "Press Start 2P"';
+                ctx.fillText('<>', x + w/2, y + h/2);
+            }
+        }
+
+        function drawPlayer() {
+            const x = player.x;
+            const y = player.y;
+            const facing = player.facing;
+
+            // Animation frame for walking
+            const isMoving = Math.abs(player.vx) > 0.5;
+            if (isMoving && player.onGround) {
+                player.frameTimer++;
+                if (player.frameTimer > 8) {
+                    player.frameTimer = 0;
+                    player.frame = (player.frame + 1) % 2;
+                }
+            } else {
+                player.frame = 0;
+            }
+
+            ctx.save();
+            if (facing === -1) {
+                ctx.translate(x + player.width, y);
+                ctx.scale(-1, 1);
+                ctx.translate(0, 0);
+            } else {
+                ctx.translate(x, y);
+            }
+
+            // Hat
+            ctx.fillStyle = COLORS.playerRed;
+            ctx.fillRect(6, 0, 20, 8);
+            ctx.fillRect(2, 8, 28, 8);
+
+            // Hair
+            ctx.fillStyle = COLORS.playerBrown;
+            ctx.fillRect(2, 12, 6, 8);
+
+            // Face
+            ctx.fillStyle = COLORS.playerSkin;
+            ctx.fillRect(4, 16, 24, 12);
+            ctx.fillRect(24, 12, 8, 8);
+
+            // Eye
+            ctx.fillStyle = COLORS.black;
+            ctx.fillRect(20, 18, 4, 4);
+
+            // Mustache
+            ctx.fillStyle = COLORS.playerBrown;
+            ctx.fillRect(16, 24, 12, 4);
+            ctx.fillRect(24, 20, 8, 4);
+
+            // Body/Overalls
+            ctx.fillStyle = COLORS.playerRed;
+            ctx.fillRect(4, 28, 24, 8);
+
+            ctx.fillStyle = COLORS.playerBlue;
+            ctx.fillRect(2, 32, 28, 12);
+
+            // Overall straps
+            ctx.fillStyle = COLORS.playerBlue;
+            ctx.fillRect(8, 28, 4, 4);
+            ctx.fillRect(20, 28, 4, 4);
+
+            // Buttons
+            ctx.fillStyle = COLORS.coin;
+            ctx.fillRect(14, 36, 4, 4);
+
+            // Legs
+            if (!player.onGround) {
+                // Jumping pose
+                ctx.fillStyle = COLORS.playerBlue;
+                ctx.fillRect(2, 44, 10, 4);
+                ctx.fillRect(20, 44, 10, 4);
+                ctx.fillStyle = COLORS.playerBrown;
+                ctx.fillRect(0, 44, 6, 4);
+                ctx.fillRect(26, 44, 6, 4);
+            } else if (player.frame === 1 && isMoving) {
+                // Walking frame
+                ctx.fillStyle = COLORS.playerBlue;
+                ctx.fillRect(4, 44, 8, 4);
+                ctx.fillRect(20, 44, 8, 4);
+                ctx.fillStyle = COLORS.playerBrown;
+                ctx.fillRect(2, 44, 6, 4);
+                ctx.fillRect(24, 44, 6, 4);
+            } else {
+                // Standing
+                ctx.fillStyle = COLORS.playerBlue;
+                ctx.fillRect(4, 44, 10, 4);
+                ctx.fillRect(18, 44, 10, 4);
+                ctx.fillStyle = COLORS.playerBrown;
+                ctx.fillRect(2, 44, 6, 4);
+                ctx.fillRect(24, 44, 6, 4);
+            }
+
+            ctx.restore();
+        }
+
+        function drawHills() {
+            ctx.fillStyle = '#00a800';
+
+            // Hill 1
+            ctx.beginPath();
+            ctx.moveTo(50, canvas.height - GROUND_HEIGHT);
+            ctx.quadraticCurveTo(120, canvas.height - GROUND_HEIGHT - 80, 190, canvas.height - GROUND_HEIGHT);
+            ctx.fill();
+
+            // Hill 2
+            ctx.beginPath();
+            ctx.moveTo(400, canvas.height - GROUND_HEIGHT);
+            ctx.quadraticCurveTo(500, canvas.height - GROUND_HEIGHT - 60, 600, canvas.height - GROUND_HEIGHT);
+            ctx.fill();
+
+            // Spots on hills
+            ctx.fillStyle = '#00c800';
+            ctx.beginPath();
+            ctx.arc(100, canvas.height - GROUND_HEIGHT - 30, 15, 0, Math.PI * 2);
+            ctx.arc(140, canvas.height - GROUND_HEIGHT - 20, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(480, canvas.height - GROUND_HEIGHT - 25, 12, 0, Math.PI * 2);
+            ctx.arc(530, canvas.height - GROUND_HEIGHT - 15, 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Particle effects
+        const particles = [];
+
+        function createHitParticles(x, y) {
+            for (let i = 0; i < 8; i++) {
+                particles.push({
+                    x: x + Math.random() * 48,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: -Math.random() * 8 - 4,
+                    life: 30,
+                    color: COLORS.coin
+                });
+            }
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.5;
+                p.life--;
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        function drawParticles() {
+            for (const p of particles) {
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life / 30;
+                ctx.fillRect(p.x, p.y, 6, 6);
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        // Popup notification
+        let notification = null;
+
+        function showNotification(text, link) {
+            notification = {
+                text: text,
+                link: link,
+                timer: 90,
+                y: -50
+            };
+        }
+
+        function updateNotification() {
+            if (notification) {
+                notification.timer--;
+                if (notification.y < 20) {
+                    notification.y += 5;
+                }
+                if (notification.timer <= 0) {
+                    window.open(notification.link, '_blank');
+                    notification = null;
+                }
+            }
+        }
+
+        function drawNotification() {
+            if (notification) {
+                ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                ctx.fillRect(canvas.width/2 - 150, notification.y, 300, 40);
+                ctx.fillStyle = COLORS.white;
+                ctx.font = '10px "Press Start 2P"';
+                ctx.textAlign = 'center';
+                ctx.fillText('Opening ' + notification.text + '...', canvas.width/2, notification.y + 25);
+            }
+        }
+
+        // Physics and collision
+        function update() {
+            // Horizontal movement
+            if (keys.left) {
+                player.vx = -MOVE_SPEED;
+                player.facing = -1;
+            } else if (keys.right) {
+                player.vx = MOVE_SPEED;
+                player.facing = 1;
+            } else {
+                player.vx *= 0.8;
+            }
+
+            // Jumping
+            if (keys.jump && player.onGround) {
+                player.vy = JUMP_FORCE;
+                player.onGround = false;
+            }
+
+            // Apply gravity
+            player.vy += GRAVITY;
+
+            // Update position
+            player.x += player.vx;
+            player.y += player.vy;
+
+            // Ground collision
+            const groundY = canvas.height - GROUND_HEIGHT - player.height;
+            if (player.y >= groundY) {
+                player.y = groundY;
+                player.vy = 0;
+                player.onGround = true;
+            }
+
+            // Wall boundaries
+            if (player.x < 0) player.x = 0;
+            if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+
+            // Block collision (from below)
+            for (const block of blocks) {
+                // Update bob animation
+                if (block.bobY < 0) {
+                    block.bobY += 2;
+                    if (block.bobY > 0) block.bobY = 0;
+                }
+
+                if (block.hit) continue;
+
+                // Check if player is hitting block from below
+                const playerTop = player.y;
+                const playerBottom = player.y + player.height;
+                const playerLeft = player.x;
+                const playerRight = player.x + player.width;
+
+                const blockTop = block.y + block.bobY;
+                const blockBottom = block.y + block.bobY + block.height;
+                const blockLeft = block.x;
+                const blockRight = block.x + block.width;
+
+                // Check for collision from below (player's head hitting block's bottom)
+                if (player.vy < 0 && // Moving upward
+                    playerTop <= blockBottom &&
+                    playerTop >= blockTop &&
+                    playerRight > blockLeft + 8 &&
+                    playerLeft < blockRight - 8) {
+
+                    // Hit the block!
+                    block.hit = true;
+                    block.bobY = -15;
+                    player.vy = Math.abs(player.vy) * 0.3; // Bounce down
+                    player.y = blockBottom + 1;
+
+                    createHitParticles(block.x, block.y);
+
+                    // Show notification and navigate
+                    let linkName = '';
+                    if (block.icon === 'linkedin') linkName = 'LinkedIn';
+                    else if (block.icon === 'twitter') linkName = 'X (Twitter)';
+                    else if (block.icon === 'github') linkName = 'GitHub';
+
+                    showNotification(linkName, block.link);
+                }
+            }
+
+            // Platform collision (standing on blocks and bricks)
+            const allPlatforms = [...blocks, ...bricks];
+            for (const platform of allPlatforms) {
+                const platY = platform.y + (platform.bobY || 0);
+
+                if (player.vy > 0 && // Falling
+                    player.y + player.height >= platY &&
+                    player.y + player.height <= platY + 15 &&
+                    player.x + player.width > platform.x + 4 &&
+                    player.x < platform.x + platform.width - 4) {
+
+                    player.y = platY - player.height;
+                    player.vy = 0;
+                    player.onGround = true;
+                }
+            }
+
+            updateParticles();
+            updateNotification();
+        }
+
+        function draw() {
+            // Clear and draw sky
+            ctx.fillStyle = COLORS.sky;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw clouds
+            for (const cloud of clouds) {
+                drawCloud(cloud.x, cloud.y, cloud.size);
+            }
+
+            // Draw hills (background)
+            drawHills();
+
+            // Draw ground
+            drawGround();
+
+            // Draw bricks
+            for (const brick of bricks) {
+                drawBrick(brick.x, brick.y, brick.width, brick.height);
+            }
+
+            // Draw question blocks
+            for (const block of blocks) {
+                drawQuestionBlock(block);
+            }
+
+            // Draw particles
+            drawParticles();
+
+            // Draw player
+            drawPlayer();
+
+            // Draw notification
+            drawNotification();
+
+            // Draw labels under blocks
+            ctx.fillStyle = COLORS.white;
+            ctx.font = '8px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.fillText('LinkedIn', blocks[0].x + 24, blocks[0].y + 65);
+            ctx.fillText('X', blocks[1].x + 24, blocks[1].y + 65);
+            ctx.fillText('GitHub', blocks[2].x + 24, blocks[2].y + 65);
+        }
+
+        // Game loop
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start the game
+        gameLoop();
+
+        // Reset blocks after some time so user can hit them again
+        setInterval(() => {
+            for (const block of blocks) {
+                block.hit = false;
+            }
+        }, 10000);
+    </script>
+</body>
 </html>
