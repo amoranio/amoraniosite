@@ -312,7 +312,8 @@
     </div>
     <p class="instructions">
         Arrow Keys or WASD to move | SPACE or W or UP to jump<br>
-        Hit the blocks from below to visit links!
+        Hit the blocks from below to visit links!<br>
+        Walk right to discover more blocks!
     </p>
     <p class="popup-warning">
         Note: Pop-up blockers may prevent links from opening.<br>
@@ -371,6 +372,10 @@
         const JUMP_FORCE = -15;
         const MOVE_SPEED = 5;
         const GROUND_HEIGHT = 100;
+        const WORLD_WIDTH = 1800; // Wider than canvas for scrolling
+
+        // Camera position
+        let cameraX = 0;
 
         // Current character
         let currentCharacter = 'mario';
@@ -413,7 +418,10 @@
         const LINKS = {
             linkedin: 'https://www.linkedin.com/in/ashleymoran',
             twitter: 'https://x.com/amoranio',
-            github: 'https://github.com/amoranio'
+            github: 'https://github.com/amoranio',
+            exnoscan: 'https://exnoscan.com',
+            clearqr: 'https://clearqr.exnoscan.com',
+            badmcp: 'https://amoranio.github.io/badMCP'
         };
 
         // Player object
@@ -430,10 +438,10 @@
             frameTimer: 0
         };
 
-        // Question blocks - adjusted for larger canvas
+        // Question blocks - spread across the wider world
         const blocks = [
             {
-                x: 250,
+                x: 200,
                 y: 220,
                 width: 56,
                 height: 56,
@@ -441,10 +449,11 @@
                 bobY: 0,
                 link: LINKS.linkedin,
                 label: 'in',
-                icon: 'linkedin'
+                icon: 'linkedin',
+                displayName: 'LinkedIn'
             },
             {
-                x: 472,
+                x: 450,
                 y: 220,
                 width: 56,
                 height: 56,
@@ -452,10 +461,11 @@
                 bobY: 0,
                 link: LINKS.twitter,
                 label: 'X',
-                icon: 'twitter'
+                icon: 'twitter',
+                displayName: 'X'
             },
             {
-                x: 694,
+                x: 700,
                 y: 220,
                 width: 56,
                 height: 56,
@@ -463,13 +473,50 @@
                 bobY: 0,
                 link: LINKS.github,
                 label: '<>',
-                icon: 'github'
+                icon: 'github',
+                displayName: 'GitHub'
+            },
+            {
+                x: 950,
+                y: 220,
+                width: 56,
+                height: 56,
+                hit: false,
+                bobY: 0,
+                link: LINKS.exnoscan,
+                label: 'EX',
+                icon: 'exnoscan',
+                displayName: 'Exnoscan'
+            },
+            {
+                x: 1200,
+                y: 220,
+                width: 56,
+                height: 56,
+                hit: false,
+                bobY: 0,
+                link: LINKS.clearqr,
+                label: 'QR',
+                icon: 'clearqr',
+                displayName: 'ClearQR'
+            },
+            {
+                x: 1450,
+                y: 220,
+                width: 56,
+                height: 56,
+                hit: false,
+                bobY: 0,
+                link: LINKS.badmcp,
+                label: 'bd',
+                icon: 'badmcp',
+                displayName: 'badMCP'
             }
         ];
 
         // Decorative blocks (bricks)
         const bricks = [];
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < blocks.length; i++) {
             bricks.push({ x: blocks[i].x - 56, y: 220, width: 56, height: 56 });
             bricks.push({ x: blocks[i].x + 56, y: 220, width: 56, height: 56 });
         }
@@ -516,12 +563,15 @@
         addMobileListeners(btnRight, 'right');
         addMobileListeners(btnJump, 'jump');
 
-        // Clouds - adjusted for larger canvas
+        // Clouds - spread across the wider world
         const clouds = [
             { x: 120, y: 60, size: 1.2 },
             { x: 400, y: 90, size: 1 },
             { x: 700, y: 50, size: 1.4 },
-            { x: 900, y: 100, size: 0.9 }
+            { x: 900, y: 100, size: 0.9 },
+            { x: 1150, y: 70, size: 1.1 },
+            { x: 1400, y: 95, size: 1.3 },
+            { x: 1650, y: 55, size: 1.0 }
         ];
 
         // Draw functions
@@ -541,13 +591,16 @@
             ctx.fillStyle = COLORS.ground;
             ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
 
+            // Calculate offset for seamless scrolling
+            const offsetX = cameraX % 32;
+
             ctx.fillStyle = COLORS.groundDark;
-            for (let x = 0; x < canvas.width; x += 32) {
+            for (let x = -offsetX; x < canvas.width + 32; x += 32) {
                 ctx.fillRect(x, canvas.height - GROUND_HEIGHT, 2, GROUND_HEIGHT);
                 ctx.fillRect(x, canvas.height - GROUND_HEIGHT + 16, 32, 2);
                 ctx.fillRect(x, canvas.height - GROUND_HEIGHT + 48, 32, 2);
             }
-            for (let x = 16; x < canvas.width; x += 32) {
+            for (let x = 16 - offsetX; x < canvas.width + 32; x += 32) {
                 ctx.fillRect(x, canvas.height - GROUND_HEIGHT + 32, 2, 32);
             }
 
@@ -555,7 +608,12 @@
             ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, 4);
         }
 
-        function drawBrick(x, y, width, height) {
+        function drawBrick(worldX, y, width, height) {
+            const x = worldX - cameraX;
+
+            // Skip if off screen
+            if (x + width < 0 || x > canvas.width) return;
+
             ctx.fillStyle = COLORS.brick;
             ctx.fillRect(x, y, width, height);
 
@@ -572,10 +630,13 @@
         }
 
         function drawQuestionBlock(block) {
-            const x = block.x;
+            const x = block.x - cameraX;
             const y = block.y + block.bobY;
             const w = block.width;
             const h = block.height;
+
+            // Skip if off screen
+            if (x + w < 0 || x > canvas.width) return;
 
             ctx.fillStyle = block.hit ? '#8b4513' : COLORS.questionBlock;
             ctx.fillRect(x, y, w, h);
@@ -601,14 +662,11 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            if (block.icon === 'linkedin') {
-                ctx.fillText('in', x + w/2, y + h/2);
-            } else if (block.icon === 'twitter') {
-                ctx.fillText('X', x + w/2, y + h/2);
-            } else if (block.icon === 'github') {
+            // Draw the block label
+            if (block.icon === 'github' || block.icon === 'badmcp') {
                 ctx.font = 'bold 16px "Press Start 2P"';
-                ctx.fillText('<>', x + w/2, y + h/2);
             }
+            ctx.fillText(block.label, x + w/2, y + h/2);
         }
 
         // Character drawing functions
@@ -832,43 +890,69 @@
                 player.frame = 0;
             }
 
+            // Draw player at screen position (world position minus camera)
+            const screenX = player.x - cameraX;
+
             if (currentCharacter === 'mario') {
-                drawMario(ctx, player.x, player.y, player.facing, isMoving, player.frame, player.onGround);
+                drawMario(ctx, screenX, player.y, player.facing, isMoving, player.frame, player.onGround);
             } else if (currentCharacter === 'ash') {
-                drawAsh(ctx, player.x, player.y, player.facing, isMoving, player.frame, player.onGround);
+                drawAsh(ctx, screenX, player.y, player.facing, isMoving, player.frame, player.onGround);
             } else if (currentCharacter === 'maggie') {
-                drawMaggie(ctx, player.x, player.y, player.facing, isMoving, player.frame, player.onGround);
+                drawMaggie(ctx, screenX, player.y, player.facing, isMoving, player.frame, player.onGround);
             }
         }
 
+        // Hills data - spread across the world
+        const hills = [
+            { x: 50, width: 200, height: 100 },
+            { x: 500, width: 240, height: 80 },
+            { x: 850, width: 150, height: 50 },
+            { x: 1100, width: 200, height: 90 },
+            { x: 1450, width: 180, height: 70 },
+            { x: 1700, width: 160, height: 60 }
+        ];
+
+        // Bush decorations on hills
+        const bushes = [
+            { x: 120, y: 40, r1: 18, r2: 12, offset: 50 },
+            { x: 600, y: 35, r1: 15, r2: 10, offset: 60 },
+            { x: 1180, y: 45, r1: 16, r2: 11, offset: 55 },
+            { x: 1520, y: 30, r1: 14, r2: 10, offset: 50 }
+        ];
+
         function drawHills() {
+            // Parallax factor for hills (slower than foreground)
+            const parallax = 0.5;
+            const offsetX = cameraX * parallax;
+
             ctx.fillStyle = '#00a800';
 
-            ctx.beginPath();
-            ctx.moveTo(50, canvas.height - GROUND_HEIGHT);
-            ctx.quadraticCurveTo(150, canvas.height - GROUND_HEIGHT - 100, 250, canvas.height - GROUND_HEIGHT);
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.moveTo(500, canvas.height - GROUND_HEIGHT);
-            ctx.quadraticCurveTo(620, canvas.height - GROUND_HEIGHT - 80, 740, canvas.height - GROUND_HEIGHT);
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.moveTo(850, canvas.height - GROUND_HEIGHT);
-            ctx.quadraticCurveTo(920, canvas.height - GROUND_HEIGHT - 50, 1000, canvas.height - GROUND_HEIGHT);
-            ctx.fill();
+            for (const hill of hills) {
+                const screenX = hill.x - offsetX;
+                // Only draw if on screen
+                if (screenX + hill.width > -100 && screenX < canvas.width + 100) {
+                    ctx.beginPath();
+                    ctx.moveTo(screenX, canvas.height - GROUND_HEIGHT);
+                    ctx.quadraticCurveTo(
+                        screenX + hill.width / 2,
+                        canvas.height - GROUND_HEIGHT - hill.height,
+                        screenX + hill.width,
+                        canvas.height - GROUND_HEIGHT
+                    );
+                    ctx.fill();
+                }
+            }
 
             ctx.fillStyle = '#00c800';
-            ctx.beginPath();
-            ctx.arc(120, canvas.height - GROUND_HEIGHT - 40, 18, 0, Math.PI * 2);
-            ctx.arc(170, canvas.height - GROUND_HEIGHT - 25, 12, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(600, canvas.height - GROUND_HEIGHT - 35, 15, 0, Math.PI * 2);
-            ctx.arc(660, canvas.height - GROUND_HEIGHT - 20, 10, 0, Math.PI * 2);
-            ctx.fill();
+            for (const bush of bushes) {
+                const screenX = bush.x - offsetX;
+                if (screenX > -50 && screenX < canvas.width + 50) {
+                    ctx.beginPath();
+                    ctx.arc(screenX, canvas.height - GROUND_HEIGHT - bush.y, bush.r1, 0, Math.PI * 2);
+                    ctx.arc(screenX + bush.offset, canvas.height - GROUND_HEIGHT - bush.y + 15, bush.r2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
         }
 
         // Particle effects
@@ -902,9 +986,12 @@
 
         function drawParticles() {
             for (const p of particles) {
+                const screenX = p.x - cameraX;
+                // Skip if off screen
+                if (screenX < -10 || screenX > canvas.width + 10) continue;
                 ctx.fillStyle = p.color;
                 ctx.globalAlpha = p.life / 30;
-                ctx.fillRect(p.x, p.y, 6, 6);
+                ctx.fillRect(screenX, p.y, 6, 6);
             }
             ctx.globalAlpha = 1;
         }
@@ -977,7 +1064,11 @@
             }
 
             if (player.x < 0) player.x = 0;
-            if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+            if (player.x > WORLD_WIDTH - player.width) player.x = WORLD_WIDTH - player.width;
+
+            // Update camera to follow player (smooth centering)
+            const targetCameraX = player.x - canvas.width / 2 + player.width / 2;
+            cameraX = Math.max(0, Math.min(targetCameraX, WORLD_WIDTH - canvas.width));
 
             for (const block of blocks) {
                 if (block.bobY < 0) {
@@ -1009,12 +1100,7 @@
 
                     createHitParticles(block.x, block.y);
 
-                    let linkName = '';
-                    if (block.icon === 'linkedin') linkName = 'LinkedIn';
-                    else if (block.icon === 'twitter') linkName = 'X (Twitter)';
-                    else if (block.icon === 'github') linkName = 'GitHub';
-
-                    showNotification(linkName, block.link);
+                    showNotification(block.displayName, block.link);
                 }
             }
 
@@ -1042,8 +1128,14 @@
             ctx.fillStyle = COLORS.sky;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+            // Draw clouds with parallax (slower than foreground)
+            const cloudParallax = 0.3;
             for (const cloud of clouds) {
-                drawCloud(cloud.x, cloud.y, cloud.size);
+                const screenX = cloud.x - cameraX * cloudParallax;
+                // Only draw if on screen
+                if (screenX > -100 && screenX < canvas.width + 100) {
+                    drawCloud(screenX, cloud.y, cloud.size);
+                }
             }
 
             drawHills();
@@ -1061,12 +1153,17 @@
             drawPlayer();
             drawNotification();
 
+            // Draw labels under each block
             ctx.fillStyle = COLORS.white;
             ctx.font = '10px "Press Start 2P"';
             ctx.textAlign = 'center';
-            ctx.fillText('LinkedIn', blocks[0].x + 28, blocks[0].y + 75);
-            ctx.fillText('X', blocks[1].x + 28, blocks[1].y + 75);
-            ctx.fillText('GitHub', blocks[2].x + 28, blocks[2].y + 75);
+            for (const block of blocks) {
+                const screenX = block.x - cameraX + 28;
+                // Only draw if on screen
+                if (screenX > -50 && screenX < canvas.width + 50) {
+                    ctx.fillText(block.displayName, screenX, block.y + 75);
+                }
+            }
         }
 
         function gameLoop() {
