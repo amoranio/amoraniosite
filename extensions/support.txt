@@ -1,0 +1,13 @@
+Support
+
+GETTING HELP
+If you encounter any issues, have questions, or want to request a feature, I'd love to hear from you.
+
+CONTACT OPTIONS
+- X (Twitter): @amoranio
+- Website: https://amoran.io (see contact methods listed on site)
+
+BEFORE REACHING OUT
+1. Make sure you're using the latest version of the extension
+2. Try disabling and re-enabling the extension
+3. Restart your browser if issues persist
