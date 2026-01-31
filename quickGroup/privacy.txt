@@ -1,0 +1,37 @@
+QuickGroup Privacy Policy
+
+Last updated: January 31, 2026
+
+SUMMARY
+QuickGroup does not collect, store, or transmit any personal data. All data stays on your device.
+
+DATA COLLECTION
+QuickGroup does not collect any data. Specifically:
+- No personal information is collected
+- No browsing history is collected
+- No tab URLs or titles are collected
+- No analytics or tracking is used
+- No data is sent to external servers
+
+LOCAL STORAGE
+QuickGroup stores the following data locally on your device using Chrome's storage API:
+- Group state (whether tabs are currently grouped)
+- User preference for "Keep current tab visible" setting
+
+This data never leaves your browser and is only used to maintain functionality between sessions.
+
+PERMISSIONS USED
+- tabs: Required to group and ungroup your tabs
+- tabGroups: Required to create, collapse, and manage tab groups
+- storage: Required to remember your preferences and group state
+
+These permissions are used solely for the core functionality of the extension. No data accessed through these permissions is collected or transmitted.
+
+THIRD PARTIES
+QuickGroup does not share any data with third parties because no data is collected.
+
+CHANGES TO THIS POLICY
+Any updates to this privacy policy will be reflected in the extension's store listing.
+
+CONTACT
+For questions about this privacy policy, visit: https://amoran.io
