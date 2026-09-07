@@ -181,7 +181,9 @@
                 run(432, 252, 1, 'brick'),
                 run(528, 252, 1, 'brick'),
                 [solid(816, 324, 144, 24, 'platform')],
-                run(1008, 252, 3, 'brick'),
+                // Gap at 1056 leaves room to punch the heart crate.
+                run(1008, 252, 1, 'brick'),
+                run(1104, 252, 1, 'brick'),
                 [solid(1320, 336, 132, 24, 'platform')],
                 run(1512, 300, 1, 'brick'),
                 [solid(1656, 348, 216, 24, 'platform')],
@@ -190,7 +192,9 @@
                 [solid(2000, 300, 120, 24, 'platform')],
                 stairs(2400, 3, 'brick', 1),
                 [solid(2688, 288, 168, 24, 'platform')],
-                run(2880, 216, 4, 'brick'),
+                // Gap at 2928 leaves room to punch the coin crate.
+                run(2880, 216, 1, 'brick'),
+                run(2976, 216, 2, 'brick'),
                 stairs(3120, 4, 'brick', 1)
             ),
             movers: [
@@ -236,20 +240,28 @@
                 run(336, 288, 2, 'metal'),
                 [solid(624, 336, 120, 22, 'platform')],
                 [solid(792, 264, 120, 22, 'platform')],
-                run(1032, 252, 3, 'brick'),
+                // Gap at 1080 leaves room to punch the GitHub link block.
+                run(1032, 252, 1, 'brick'),
+                run(1128, 252, 1, 'brick'),
                 [solid(1272, 336, 144, 22, 'platform')],
                 run(1440, 288, 2, 'metal'),
                 [solid(1584, 384, 110, 22, 'platform')],
                 [solid(1752, 300, 168, 22, 'platform')],
-                run(1968, 228, 3, 'brick'),
+                // Gap at 2016 leaves room to punch the heart crate.
+                run(1968, 228, 1, 'brick'),
+                run(2064, 228, 1, 'brick'),
                 [solid(2256, 348, 144, 22, 'platform')],
                 run(2400, 264, 1, 'metal'),
                 [solid(2544, 396, 120, 22, 'platform')],
                 [solid(2736, 312, 192, 22, 'platform')],
-                run(3000, 240, 4, 'brick'),
+                // Gap at 3048 leaves room to punch the Exnoscan link block.
+                run(3000, 240, 1, 'brick'),
+                run(3096, 240, 2, 'brick'),
                 [solid(3264, 348, 144, 22, 'platform')],
                 stairs(3480, 3, 'metal', 1),
-                run(3672, 240, 3, 'brick')
+                // Gap at 3720 leaves room to punch the coin crate.
+                run(3672, 240, 1, 'brick'),
+                run(3768, 240, 1, 'brick')
             ),
             movers: [
                 { x: 780, y: 372, w: 120, h: 22, axis: 'x', range: 130, speed: 0.6, phase: 0 },
@@ -257,9 +269,10 @@
                 { x: 2560, y: 372, w: 130, h: 22, axis: 'x', range: 150, speed: 0.7, phase: 2.1 }
             ],
             blocks: [
-                { x: 336, y: 240, kind: 'crate', reward: 'weapon:spread' },
+                // Clear of the metal step at 336, which left no headroom under it.
+                { x: 264, y: 240, kind: 'crate', reward: 'weapon:spread' },
                 { x: 1080, y: 252, kind: 'link', link: 'github' },
-                { x: 1992, y: 228, kind: 'crate', reward: 'heart' },
+                { x: 2016, y: 228, kind: 'crate', reward: 'heart' },
                 { x: 3048, y: 240, kind: 'link', link: 'exnoscan' },
                 { x: 3720, y: 240, kind: 'crate', reward: 'coins' }
             ],
@@ -309,15 +322,20 @@
                 run(1104, 276, 2, 'metal'),
                 [solid(1296, 384, 110, 22, 'platform')],
                 [solid(1464, 300, 168, 22, 'platform')],
-                run(1680, 228, 3, 'brick'),
+                // Gap at 1728 leaves room to punch the clearQR link block.
+                run(1680, 228, 1, 'brick'),
+                run(1776, 228, 1, 'brick'),
                 [solid(1968, 348, 130, 22, 'platform')],
                 run(2160, 288, 2, 'metal'),
                 [solid(2352, 372, 120, 22, 'platform')],
                 [solid(2544, 288, 168, 22, 'platform')],
-                run(2784, 240, 3, 'brick'),
+                // Gap at 2832 leaves room to punch the heart crate.
+                run(2784, 240, 1, 'brick'),
+                run(2880, 240, 1, 'brick'),
                 [solid(3072, 348, 144, 22, 'platform')],
                 stairs(3264, 3, 'metal', 1),
-                run(3456, 252, 2, 'brick'),
+                // Gap at 3504 leaves room to punch the coin crate.
+                run(3456, 252, 1, 'brick'),
                 // boss arena floor furniture
                 [solid(3960, 336, 168, 24, 'metal')],
                 [solid(4248, 336, 168, 24, 'metal')],
@@ -330,9 +348,11 @@
                 { x: 2760, y: 312, w: 110, h: 22, axis: 'y', range: 110, speed: 0.55, phase: 2.4 }
             ],
             blocks: [
-                { x: 288, y: 240, kind: 'crate', reward: 'weapon:pulse' },
+                // Clear of the metal step at 288, which left no headroom under it.
+                { x: 216, y: 240, kind: 'crate', reward: 'weapon:pulse' },
                 { x: 1728, y: 228, kind: 'link', link: 'clearqr' },
-                { x: 2832, y: 240, kind: 'crate', reward: 'heart' },
+                // Was hanging over the pit at 2760-2880 with nowhere to stand.
+                { x: 2352, y: 240, kind: 'crate', reward: 'heart' },
                 { x: 3504, y: 252, kind: 'crate', reward: 'coins' }
             ],
             coins: [].concat(

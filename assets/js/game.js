@@ -395,6 +395,11 @@
                 used: false, bob: 0, shine: Math.random() * Math.PI * 2
             };
             blocks.push(block);
+            // Terrain sharing a block's cell would swallow the punch from below
+            // and quietly make its reward unreachable, so the block wins.
+            for (let i = solids.length - 1; i >= 0; i--) {
+                if (overlaps(block, solids[i])) solids.splice(i, 1);
+            }
             solids.push({ x: b.x, y: b.y, w: 48, h: 48, kind: 'blockbody', block: block });
         });
 
@@ -2717,6 +2722,8 @@
             game.camX = Math.max(0, Math.min(game.level.width - VIEW_W, x - VIEW_W / 2));
         },
         arm(id) { giveWeapon(id); },
-        get boss() { return boss; }
+        get boss() { return boss; },
+        get blocks() { return blocks; },
+        get solids() { return solids; }
     };
 })(window);
