@@ -681,16 +681,38 @@
         audio.fail();
     }
 
+    /* Put the player back on solid ground, well clear of the ledge they just
+     * walked off, so a fall can't turn into a death loop. */
+    function footing(x) {
+        const segments = game.level.ground;
+        let best = null;
+        let bestGap = Infinity;
+        for (let i = 0; i < segments.length; i++) {
+            const seg = segments[i];
+            const left = Math.max(seg[0] + 48, 0);
+            const right = seg[1] - 80;
+            if (right <= left) continue;
+            if (x >= seg[0] && x <= seg[1]) return Math.max(left, Math.min(right, x - 56));
+            const gap = x < seg[0] ? seg[0] - x : x - seg[1];
+            if (gap < bestGap) { bestGap = gap; best = x < seg[0] ? left : right; }
+        }
+        return best == null ? 80 : best;
+    }
+
     function respawnFromPit() {
         player.hearts -= 1;
         ui.syncHud(true);
         if (player.hearts <= 0) { killPlayer(); return; }
-        player.x = player.safeX;
-        player.y = player.safeY - 20;
+        player.x = footing(player.safeX);
+        player.y = GROUND_TOP - PLAYER_H - 8;
         player.vx = 0;
         player.vy = 0;
-        player.invuln = 80;
+        player.invuln = 90;
+        player.safeX = player.x;
+        player.safeY = player.y;
         game.flash = 6;
+        game.camX = Math.max(0, Math.min(game.level.width - VIEW_W, player.x - VIEW_W / 2));
+        spark(player.x + player.w / 2, player.y + player.h, 12, 'rgba(255,255,255,0.6)', 3.5);
         audio.hurt();
     }
 
@@ -879,8 +901,8 @@
                 c.vy += 0.34;
                 if (c.y > GROUND_TOP - 26) { c.y = GROUND_TOP - 26; c.loose = false; }
             }
-            if (Math.abs((c.x + 11) - (player.x + player.w / 2)) < 24 &&
-                Math.abs((c.y + 11) - (player.y + player.h / 2)) < 30 && !player.dead) {
+            const box = { x: c.x - 5, y: c.y - 5, w: 32, h: 32 };
+            if (!player.dead && overlaps(player, box)) {
                 c.taken = true;
                 game.score += 25;
                 spark(c.x + 11, c.y + 11, 6, '#ffe066', 3);
@@ -1240,7 +1262,9 @@
         if (arena && !arena.active && player.x > arena.trigger) spawnBoss();
 
         if (goal && !goal.reached && !player.dead) {
-            const box = { x: goal.x, y: goal.y, w: goal.w, h: goal.h };
+            // The trigger is the whole column, not just the drawn gate, so a
+            // high jump across the finish still counts.
+            const box = { x: goal.x, y: 0, w: goal.w, h: goal.y + goal.h };
             if (overlaps(player, box)) {
                 goal.reached = true;
                 completeLevel();
@@ -1446,8 +1470,9 @@
         }
 
         if (theme.backdrop === 'hills') {
-            drawHillLayer(backdrop.far, 0.22, theme.farDark, 210);
-            drawHillLayer(backdrop.mid, 0.42, theme.far, 150);
+            // Lightest furthest back so the tree line reads against the hills.
+            drawHillLayer(backdrop.far, 0.22, theme.far);
+            drawHillLayer(backdrop.mid, 0.42, theme.farDark);
             drawTreeLine(0.6, theme.midDark);
         } else if (theme.backdrop === 'city') {
             drawSkyline(backdrop.far, 0.2, theme.farDark, false);
@@ -1464,30 +1489,79 @@
         return ((v % span) + span) % span;
     }
 
+    /* The scenery is stepped onto a coarse grid so distant shapes read as the
+       same pixel art as the sprites rather than smooth vector curves. Every
+       helper below adds grid-aligned rects to the *current* path and leaves the
+       fill to the caller: one fill per shape keeps translucent pieces from
+       double-darkening where they overlap, and rect subpaths never get joined
+       by the stray connecting lines that arcs in a shared path produce. */
+    const BG_PX = 4;
+
+    function snap(v) {
+        return Math.round(v / BG_PX) * BG_PX;
+    }
+
+    function pxDisc(cx, cy, r) {
+        const top = snap(cy - r);
+        const bottom = snap(cy + r);
+        for (let y = top; y < bottom; y += BG_PX) {
+            const dy = y + BG_PX / 2 - cy;
+            const half = Math.sqrt(Math.max(0, r * r - dy * dy));
+            const x0 = snap(cx - half);
+            const w = snap(cx + half) - x0;
+            if (w > 0) ctx.rect(x0, y, w, BG_PX);
+        }
+    }
+
+    function pxDome(cx, cy, r) {
+        const top = snap(cy - r);
+        for (let y = top; y < snap(cy); y += BG_PX) {
+            const dy = y + BG_PX / 2 - cy;
+            const half = Math.sqrt(Math.max(0, r * r - dy * dy));
+            const x0 = snap(cx - half);
+            const w = snap(cx + half) - x0;
+            if (w > 0) ctx.rect(x0, y, w, BG_PX);
+        }
+    }
+
+    function pxCone(cx, baseY, halfBase, height) {
+        const h = Math.max(BG_PX, snap(height));
+        for (let y = 0; y < h; y += BG_PX) {
+            const half = snap(halfBase * ((y + BG_PX) / h));
+            if (half <= 0) continue;
+            ctx.rect(snap(cx - half), baseY - h + y, half * 2, BG_PX);
+        }
+    }
+
     function drawCloud(x, y, s, o) {
-        ctx.fillStyle = 'rgba(255,255,255,' + o.toFixed(2) + ')';
         const u = 16 * s;
+        ctx.fillStyle = 'rgba(255,255,255,' + o.toFixed(2) + ')';
         ctx.beginPath();
-        ctx.arc(x, y, u, 0, Math.PI * 2);
-        ctx.arc(x + u * 1.4, y - u * 0.35, u * 1.25, 0, Math.PI * 2);
-        ctx.arc(x + u * 2.9, y, u * 0.95, 0, Math.PI * 2);
-        ctx.arc(x + u * 1.5, y + u * 0.5, u * 1.05, 0, Math.PI * 2);
+        pxDisc(x, y, u);
+        pxDisc(x + u * 1.4, y - u * 0.35, u * 1.25);
+        pxDisc(x + u * 2.9, y, u * 0.95);
+        pxDisc(x + u * 1.5, y + u * 0.5, u * 1.05);
         ctx.fill();
     }
 
-    function drawHillLayer(items, parallax, colour, baseY) {
+    function drawHillLayer(items, parallax, colour) {
         const cam = game.camX * parallax;
         ctx.fillStyle = colour;
+        ctx.beginPath();
         for (let i = 0; i < items.length; i++) {
-            const h = items[i];
-            const x = h.x - cam;
-            if (x + h.w < -80 || x > VIEW_W + 80) continue;
-            ctx.beginPath();
-            ctx.moveTo(x, GROUND_TOP);
-            ctx.quadraticCurveTo(x + h.w / 2, GROUND_TOP - h.h, x + h.w, GROUND_TOP);
-            ctx.closePath();
-            ctx.fill();
+            const hill = items[i];
+            const left = hill.x - cam;
+            if (left + hill.w < -80 || left > VIEW_W + 80) continue;
+            const x0 = snap(left);
+            const x1 = snap(left + hill.w);
+            for (let x = x0; x < x1; x += BG_PX) {
+                // Matches the old quadratic silhouette: peak is half the height.
+                const t = (x + BG_PX / 2 - left) / hill.w;
+                const rise = snap(2 * t * (1 - t) * hill.h);
+                if (rise > 0) ctx.rect(x, GROUND_TOP - rise, BG_PX, rise);
+            }
         }
+        ctx.fill();
     }
 
     function drawTreeLine(parallax, colour) {
@@ -1495,30 +1569,33 @@
         for (let i = 0; i < backdrop.props.length; i++) {
             const p = backdrop.props[i];
             const x = p.x - cam;
-            if (x < -60 || x > VIEW_W + 60) continue;
+            if (x < -80 || x > VIEW_W + 80) continue;
             const s = p.s;
+
             if (p.k === 0) {
                 ctx.fillStyle = '#4b3320';
-                ctx.fillRect(Math.round(x + 10 * s), GROUND_TOP - 34 * s, Math.round(7 * s), 34 * s);
+                ctx.fillRect(snap(x + 10 * s), GROUND_TOP - snap(34 * s), Math.max(BG_PX, snap(7 * s)), snap(34 * s));
                 ctx.fillStyle = colour;
                 ctx.beginPath();
-                ctx.arc(x + 13 * s, GROUND_TOP - 44 * s, 20 * s, 0, Math.PI * 2);
-                ctx.arc(x + 2 * s, GROUND_TOP - 34 * s, 14 * s, 0, Math.PI * 2);
-                ctx.arc(x + 26 * s, GROUND_TOP - 34 * s, 14 * s, 0, Math.PI * 2);
+                pxDisc(x + 13 * s, GROUND_TOP - 44 * s, 20 * s);
+                pxDisc(x + 2 * s, GROUND_TOP - 34 * s, 14 * s);
+                pxDisc(x + 26 * s, GROUND_TOP - 34 * s, 14 * s);
                 ctx.fill();
             } else if (p.k === 1) {
                 ctx.fillStyle = colour;
                 ctx.beginPath();
-                ctx.arc(x, GROUND_TOP - 12 * s, 15 * s, Math.PI, 0);
-                ctx.arc(x + 22 * s, GROUND_TOP - 12 * s, 11 * s, Math.PI, 0);
+                pxDome(x, GROUND_TOP - 12 * s, 15 * s);
+                pxDome(x + 22 * s, GROUND_TOP - 12 * s, 11 * s);
+                ctx.rect(snap(x - 15 * s), GROUND_TOP - snap(13 * s), snap(48 * s), snap(13 * s));
                 ctx.fill();
-                ctx.fillRect(x - 15 * s, GROUND_TOP - 13 * s, 48 * s, 13 * s);
             } else {
-                ctx.fillStyle = 'rgba(0,0,0,0.12)';
+                // Conifers sit a shade back: same path filled twice, once to
+                // colour it and once to push it into the distance.
                 ctx.beginPath();
-                ctx.moveTo(x, GROUND_TOP);
-                ctx.lineTo(x + 14 * s, GROUND_TOP - 46 * s);
-                ctx.lineTo(x + 28 * s, GROUND_TOP);
+                pxCone(x + 14 * s, GROUND_TOP, 14 * s, 46 * s);
+                ctx.fillStyle = colour;
+                ctx.fill();
+                ctx.fillStyle = 'rgba(0,0,0,0.16)';
                 ctx.fill();
             }
         }
@@ -1528,13 +1605,14 @@
         const cam = game.camX * parallax;
         for (let i = 0; i < items.length; i++) {
             const b = items[i];
-            const x = Math.round(b.x - cam);
-            if (x + b.w < -60 || x > VIEW_W + 60) continue;
-            const top = GROUND_TOP - b.h;
+            const x = snap(b.x - cam);
+            const w = snap(b.w);
+            if (x + w < -60 || x > VIEW_W + 60) continue;
+            const top = GROUND_TOP - snap(b.h);
             ctx.fillStyle = colour;
-            ctx.fillRect(x, top, Math.round(b.w), b.h);
+            ctx.fillRect(x, top, w, GROUND_TOP - top);
             ctx.fillStyle = 'rgba(255,255,255,0.05)';
-            ctx.fillRect(x, top, Math.round(b.w), 3);
+            ctx.fillRect(x, top, w, BG_PX);
             if (lit) {
                 const rows = Math.floor(b.h / 22);
                 const cols = Math.max(1, Math.floor(b.w / 20));
@@ -1843,25 +1921,20 @@
         return 'rgb(' + r + ',' + g + ',' + b + ')';
     }
 
+    // Weighted towards the full face so a coin always reads as a coin; the
+    // edge-on frame is a flick, not a third of the loop.
+    const COIN_CYCLE = [0, 0, 1, 2, 1];
+
     function drawCoins() {
         const cam = game.camX;
-        const sprite = SPR.prop('coin');
         for (let i = 0; i < coins.length; i++) {
             const c = coins[i];
             if (c.taken) continue;
             const x = Math.round(c.x - cam);
             if (x < -30 || x > VIEW_W + 30) continue;
             const y = Math.round(c.y + Math.sin(c.spin * 0.5) * 2);
-            const wobble = Math.abs(Math.cos(c.spin));
-            const w = Math.round(22 * wobble);
-            if (w < 5) {
-                ctx.fillStyle = '#c8901a';
-                ctx.fillRect(x + 9, y, 4, 22);
-                ctx.fillStyle = '#fff3b0';
-                ctx.fillRect(x + 9, y + 2, 2, 18);
-                continue;
-            }
-            ctx.drawImage(sprite, x + 11 - Math.round(w / 2), y, w, 22);
+            const frame = COIN_CYCLE[Math.floor(c.spin / 0.42) % COIN_CYCLE.length];
+            ctx.drawImage(SPR.prop('coin' + frame), x, y, 22, 22);
         }
     }
 
@@ -2162,6 +2235,16 @@
             ctx.beginPath();
             ctx.ellipse(Math.round(player.x + player.w / 2 - game.camX), GROUND_TOP + 2, 12, 4, 0, 0, Math.PI * 2);
             ctx.fill();
+
+            // The night levels swallow a dark silhouette, so backlight it.
+            const theme = game.theme;
+            if (theme && theme.backdrop !== 'hills') {
+                glowDisc(
+                    Math.round(player.x + player.w / 2 - game.camX),
+                    Math.round(player.y + player.h / 2),
+                    34, theme.accent, 0.28
+                );
+            }
         }
 
         if (player.dead) {
@@ -2511,6 +2594,18 @@
         }
 
         bindClick('startBtn', () => { buildLevelSelect(); game.start(0); });
+
+        const heroPlay = document.getElementById('heroPlayBtn');
+        if (heroPlay) {
+            heroPlay.addEventListener('click', (e) => {
+                e.preventDefault();
+                audio.unlock();
+                if (stage) stage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                buildLevelSelect();
+                if (game.state === 'title' || game.state === 'gameover') game.start(0);
+                else if (game.state === 'paused') game.resume();
+            });
+        }
         bindClick('titleCharBtn', () => ui.showPanel('characters'));
         bindClick('titleHelpBtn', () => ui.showPanel('help'));
         bindClick('charDoneBtn', () => ui.showPanel(game.state === 'playing' ? null : 'title'));
@@ -2536,8 +2631,16 @@
         const padSwap = document.getElementById('padSwap');
         if (padSwap) padSwap.addEventListener('click', (e) => { e.preventDefault(); cycleWeapon(); });
 
-        canvas.addEventListener('pointerdown', () => {
+        function markTouch() {
+            document.body.classList.add('has-touch');
+            resizeCanvas();
+        }
+        if (navigator.maxTouchPoints > 0 || 'ontouchstart' in global) markTouch();
+        global.addEventListener('touchstart', markTouch, { once: true, passive: true });
+
+        canvas.addEventListener('pointerdown', (e) => {
             audio.unlock();
+            if (e.pointerType === 'touch') markTouch();
             if (game.state === 'title') game.start(0);
         });
 
@@ -2611,6 +2714,7 @@
             player.safeY = player.y;
             game.camX = Math.max(0, Math.min(game.level.width - VIEW_W, x - VIEW_W / 2));
         },
-        arm(id) { giveWeapon(id); }
+        arm(id) { giveWeapon(id); },
+        get boss() { return boss; }
     };
 })(window);

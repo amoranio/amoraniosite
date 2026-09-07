@@ -444,8 +444,12 @@
 
     /* ----------------------------------------------------------------- props */
 
+    const COIN_PALETTE = { o: '#7a4a06', 1: '#ffd23d', 2: '#fff3b0' };
+
+    // Four hand-authored spin frames instead of squashing one sprite: scaling a
+    // pixel grid by a fraction turns the coin into a blurry sliver.
     const PROPS = {
-        coin: {
+        coin0: {
             rows: [
                 '...ooooo...',
                 '..o11111o..',
@@ -459,7 +463,39 @@
                 '..o11111o..',
                 '...ooooo...'
             ],
-            palette: { o: '#7a4a06', 1: '#ffd23d', 2: '#fff3b0' }
+            palette: COIN_PALETTE
+        },
+        coin1: {
+            rows: [
+                '....ooo....',
+                '...o111o...',
+                '...o211o...',
+                '..o2111o...',
+                '..o21o1o...',
+                '..o21o1o...',
+                '..o21o1o...',
+                '..o2111o...',
+                '...o211o...',
+                '...o111o...',
+                '....ooo....'
+            ],
+            palette: COIN_PALETTE
+        },
+        coin2: {
+            rows: [
+                '....oo.....',
+                '....o1o....',
+                '....o1o....',
+                '...o21o....',
+                '...o21o....',
+                '...o21o....',
+                '...o21o....',
+                '...o21o....',
+                '....o1o....',
+                '....o1o....',
+                '....oo.....'
+            ],
+            palette: COIN_PALETTE
         }
     };
 
