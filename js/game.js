@@ -788,7 +788,7 @@
 
         for (const p of pickups) {
             if (p.taken) continue;
-            if (aabb(player.x, player.y, player.width, player.height, p.x, p.y, 28, 28)) {
+            if (aabb(player.x, player.y, player.width, player.height, p.x - 6, p.y - 6, 40, 40)) {
                 p.taken = true;
                 hasWeapon = true;
                 audio.pickup();
