@@ -234,11 +234,10 @@
                 makeBlock(1488, 220, 'badmcp')
             ],
             enemies: [
-                { type: 'crawler', x: 380, y: 0 },
-                { type: 'crawler', x: 820, y: 0 },
-                { type: 'crawler', x: 1100, y: 0 },
-                { type: 'crawler', x: 1580, y: 0 },
-                { type: 'crawler', x: 2100, y: 0 }
+                { type: 'crawler', x: 620, y: 0 },
+                { type: 'crawler', x: 1080, y: 0 },
+                { type: 'crawler', x: 1680, y: 0 },
+                { type: 'crawler', x: 2140, y: 0 }
             ],
             pickups: [{ type: 'weapon', x: 584, y: 100 }],
             coins: [
@@ -404,7 +403,7 @@
                 hp: s.hp,
                 stompable: s.stompable,
                 vx: e.type === 'drone' ? 1.4 : (e.type === 'brute' ? 1.05 : 1.15),
-                facing: -1,
+                facing: e.x < 500 ? 1 : -1,
                 frame: 0,
                 t: Math.random() * 100,
                 alive: true,
@@ -419,7 +418,7 @@
         player.vx = 0;
         player.vy = 0;
         player.onGround = true;
-        player.invuln = 40;
+        player.invuln = 90;
         player.deadTimer = 0;
         cameraX = 0;
         fireCooldown = 0;
@@ -577,11 +576,12 @@
             if (player.deadTimer > 0) continue;
             if (!aabb(player.x, player.y, player.width, player.height, e.x, e.y, e.w, e.h)) continue;
 
-            const stomp = player.vy > 1 && player.y + player.height - e.y < 22;
+            const stomp = player.vy > 0.4 && (player.y + player.height) <= e.y + Math.max(20, e.h * 0.62);
             if (stomp && e.stompable) {
                 e.hp -= 1;
-                player.vy = -10;
-                player.y = e.y - player.height - 1;
+                player.vy = -10.5;
+                player.y = e.y - player.height - 2;
+                player.invuln = Math.max(player.invuln, 18);
                 shake = 6;
                 if (e.hp <= 0) killEnemy(e, true);
                 else {
