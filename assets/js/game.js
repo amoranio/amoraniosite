@@ -1902,11 +1902,17 @@
             }
 
             if (b.kind === 'link') {
+                // Outlined rather than drop-shadowed: pale tints like X's washed
+                // out completely against the daytime sky.
+                const title = b.link.title.toUpperCase();
                 ctx.font = '9px "Press Start 2P", monospace';
-                ctx.fillStyle = 'rgba(0,0,0,0.55)';
-                ctx.fillText(b.link.title.toUpperCase(), x + 24, y + 68);
+                ctx.lineJoin = 'round';
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = 'rgba(4, 6, 12, 0.7)';
+                ctx.strokeText(title, x + 24, y + 67);
+                ctx.lineWidth = 1;
                 ctx.fillStyle = b.used ? shade(b.link.tint, -0.4) : b.link.tint;
-                ctx.fillText(b.link.title.toUpperCase(), x + 24, y + 67);
+                ctx.fillText(title, x + 24, y + 67);
             }
         }
     }
