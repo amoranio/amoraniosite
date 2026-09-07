@@ -190,9 +190,6 @@ body::after {
     display: block;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
-    width: 100%;
-    height: auto;
-    max-width: 100%;
     touch-action: none;
 }
 
@@ -453,7 +450,7 @@ body::after {
     .stage-frame {
         padding: 8px 8px 10px;
         border-radius: 14px;
-        width: 100%;
+        max-width: 100%;
     }
 
     .character-option {

@@ -234,7 +234,7 @@
                 makeBlock(1488, 220, 'badmcp')
             ],
             enemies: [
-                { type: 'crawler', x: 340, y: 0 },
+                { type: 'crawler', x: 380, y: 0 },
                 { type: 'crawler', x: 820, y: 0 },
                 { type: 'crawler', x: 1100, y: 0 },
                 { type: 'crawler', x: 1580, y: 0 },
@@ -425,7 +425,6 @@
         fireCooldown = 0;
         levelLocked = false;
         if (worldChip) worldChip.textContent = def.chip;
-        showBanner(def.name, 110);
     }
 
     function showBanner(text, timer) {
@@ -663,6 +662,27 @@
             if (Math.abs(player.vx) < 0.2) player.vx = 0;
         }
 
+        if (player.onGround && Math.abs(player.vx) > 1.5 && tick % 5 === 0) {
+            particles.push({
+                x: player.x + 10,
+                y: player.y + player.height - 4,
+                vx: -player.facing * 0.8,
+                vy: -1.2,
+                life: 12,
+                max: 12,
+                color: '#c08048',
+                size: 3
+            });
+        }
+
+        if (Math.abs(player.vx) > 0.5 && player.onGround) {
+            player.frameTimer++;
+            if (player.frameTimer > 7) {
+                player.frameTimer = 0;
+                player.frame = (player.frame + 1) % 2;
+            }
+        } else player.frame = 0;
+
         if (keys.jump) {
             if (!jumpPressed) jumpBuffer = JUMP_BUFFER;
             jumpPressed = true;
@@ -832,7 +852,7 @@
         notification.timer--;
         if (notification.y < 56) notification.y += 5;
         if (notification.timer <= 0) {
-            window.open(notification.link, '_blank');
+            window.open(notification.link, '_blank', 'noopener,noreferrer');
             notification = null;
         }
     }
@@ -1142,14 +1162,11 @@
 
     function drawPlayer() {
         const moving = Math.abs(player.vx) > 0.5;
-        if (moving && player.onGround) {
-            player.frameTimer++;
-            if (player.frameTimer > 7) {
-                player.frameTimer = 0;
-                player.frame = (player.frame + 1) % 2;
-            }
-        } else player.frame = 0;
         const sx = player.x - cameraX;
+        ctx.fillStyle = 'rgba(0,0,0,0.28)';
+        ctx.beginPath();
+        ctx.ellipse(sx + 16, player.y + player.height - 2, 12, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
         if (player.invuln > 0 && Math.floor(player.invuln / 3) % 2 === 0 && player.deadTimer === 0) return;
         const fn = currentCharacter === 'ash' ? drawAsh : currentCharacter === 'maggie' ? drawMaggie : drawMario;
         fn(ctx, sx, player.y, player.facing, moving, player.frame, player.onGround);
@@ -1163,25 +1180,35 @@
 
     function drawCrawler(e) {
         const x = e.x - cameraX;
-        const y = e.y + (e.alive ? 0 : 10);
-        const h = e.alive ? e.h : Math.max(8, e.h - 12);
+        const y = e.y + (e.alive ? 0 : 12);
+        const h = e.alive ? e.h : Math.max(8, e.h - 14);
+        const brute = e.type === 'brute';
         if (e.flash) ctx.globalAlpha = 0.55;
-        ctx.fillStyle = e.type === 'brute' ? '#6b2410' : COLORS.crawler;
-        ctx.fillRect(x, y, e.w, h);
-        ctx.fillStyle = e.type === 'brute' ? '#3d1208' : COLORS.crawlerDark;
-        ctx.fillRect(x, y + h - 6, e.w, 6);
-        ctx.fillStyle = COLORS.crawlerLight;
-        ctx.fillRect(x + 4, y + 4, e.w - 8, 6);
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.beginPath();
+        ctx.ellipse(x + e.w / 2, y + h - 1, e.w * 0.42, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = brute ? '#6b2410' : COLORS.crawler;
+        ctx.fillRect(x + 2, y + 6, e.w - 4, h - 8);
+        ctx.fillStyle = brute ? '#8a3014' : COLORS.crawlerLight;
+        ctx.fillRect(x + 4, y + 8, e.w - 10, 8);
+        ctx.fillStyle = brute ? '#3d1208' : COLORS.crawlerDark;
+        ctx.fillRect(x + 2, y + h - 10, e.w - 4, 6);
+        ctx.fillStyle = '#1a0c04';
+        ctx.fillRect(x + e.w / 2 - 2, y + 2, 4, 8);
+        ctx.fillStyle = brute ? '#ffb347' : '#ffdc8a';
+        ctx.fillRect(x + e.w / 2 - 3, y, 6, 4);
         ctx.fillStyle = '#fff';
-        ctx.fillRect(x + 6, y + 10, 8, 8);
-        ctx.fillRect(x + e.w - 14, y + 10, 8, 8);
-        ctx.fillStyle = e.type === 'brute' ? COLORS.droneEye : '#000';
-        ctx.fillRect(x + 8 + (e.facing === 1 ? 2 : 0), y + 12, 4, 4);
-        ctx.fillRect(x + e.w - 12 + (e.facing === 1 ? 2 : 0), y + 12, 4, 4);
+        ctx.fillRect(x + 6, y + 12, 8, 8);
+        ctx.fillRect(x + e.w - 14, y + 12, 8, 8);
+        ctx.fillStyle = brute ? COLORS.droneEye : '#1a0a00';
+        const eye = e.facing === 1 ? 2 : 0;
+        ctx.fillRect(x + 8 + eye, y + 14, 4, 4);
+        ctx.fillRect(x + e.w - 12 + eye, y + 14, 4, 4);
         ctx.fillStyle = '#3a1c08';
-        const foot = e.frame ? 3 : 0;
-        ctx.fillRect(x + 2, y + h - 2, 10, 4 + (e.alive ? foot : 0));
-        ctx.fillRect(x + e.w - 12, y + h - 2, 10, 4 + (e.alive ? 3 - foot : 0));
+        const foot = e.frame ? 4 : 0;
+        ctx.fillRect(x + 2, y + h - 4, 10, 5 + (e.alive ? foot : 0));
+        ctx.fillRect(x + e.w - 12, y + h - 4, 10, 5 + (e.alive ? 4 - foot : 0));
         ctx.globalAlpha = 1;
     }
 
@@ -1299,20 +1326,50 @@
         ctx.globalAlpha = 1;
     }
 
+    function drawHeart(x, y, filled) {
+        ctx.fillStyle = filled ? '#ff4d6d' : '#3a2430';
+        ctx.fillRect(x + 2, y, 5, 5);
+        ctx.fillRect(x + 9, y, 5, 5);
+        ctx.fillRect(x, y + 3, 16, 6);
+        ctx.fillRect(x + 3, y + 9, 10, 4);
+        ctx.fillRect(x + 6, y + 13, 4, 3);
+        if (filled) {
+            ctx.fillStyle = '#ffd0d8';
+            ctx.fillRect(x + 3, y + 2, 2, 2);
+        }
+    }
+
     function drawHUD() {
-        ctx.fillStyle = 'rgba(0,0,0,0.38)';
-        ctx.fillRect(0, 0, GAME_W, 36);
+        ctx.fillStyle = 'rgba(8,8,16,0.52)';
+        ctx.fillRect(0, 0, GAME_W, 40);
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        ctx.fillRect(0, 39, GAME_W, 1);
+
+        ctx.fillStyle = COLORS.coin;
+        ctx.beginPath();
+        ctx.ellipse(22, 20, 7, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff3a0';
+        ctx.fillRect(19, 16, 3, 5);
+
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.font = '10px "Press Start 2P"';
+        ctx.font = '11px "Press Start 2P"';
         ctx.fillStyle = '#fff';
-        ctx.fillText(levelName, 14, 20);
-        ctx.textAlign = 'center';
-        ctx.fillStyle = COLORS.coin;
-        ctx.fillText('*' + String(coins).padStart(3, '0'), GAME_W / 2, 20);
-        ctx.textAlign = 'right';
-        ctx.fillStyle = '#ff8aa0';
-        ctx.fillText('HP ' + lives + (hasWeapon ? '  STAR' : ''), GAME_W - 14, 20);
+        ctx.fillText(String(coins).padStart(3, '0'), 36, 21);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.font = '9px "Press Start 2P"';
+        ctx.fillText(levelName, 110, 21);
+
+        for (let i = 0; i < 3; i++) drawHeart(GAME_W - 228 + i * 22, 12, i < lives);
+
+        if (hasWeapon) {
+            ctx.fillStyle = COLORS.coin;
+            ctx.font = '9px "Press Start 2P"';
+            ctx.textAlign = 'right';
+            ctx.fillText('PULSE', GAME_W - 28, 21);
+        }
     }
 
     function drawNotification() {
@@ -1354,10 +1411,21 @@
         g.addColorStop(1, skyBot);
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, GAME_W, GAME_H);
-        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
         ctx.beginPath();
-        ctx.arc(120 - cameraX * 0.08, 70, 40, 0, Math.PI * 2);
+        ctx.arc(180 - cameraX * 0.06, 90, 70, 0, Math.PI * 2);
         ctx.fill();
+        ctx.fillStyle = 'rgba(20, 40, 90, 0.22)';
+        const mx = -cameraX * 0.15;
+        for (let i = 0; i < 10; i++) {
+            const bx = mx + i * 360 - 40;
+            const peak = 58 + (i % 3) * 18;
+            ctx.beginPath();
+            ctx.moveTo(bx, GAME_H - GROUND_HEIGHT);
+            ctx.lineTo(bx + 150, GAME_H - GROUND_HEIGHT - peak);
+            ctx.lineTo(bx + 300, GAME_H - GROUND_HEIGHT);
+            ctx.fill();
+        }
     }
 
     function draw() {
@@ -1410,13 +1478,14 @@
     }
 
     function resizeCanvas() {
+        const shell = document.querySelector('.stage-shell');
         const isCoarse = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
         const isNarrow = window.innerWidth <= 768;
         const mobile = isCoarse || isNarrow;
-        const margin = mobile ? 24 : 40;
-        const reserved = mobile ? 300 : 210;
-        const maxW = Math.min(window.innerWidth - margin, 1100);
-        const maxH = Math.max(180, Math.min((window.visualViewport ? window.visualViewport.height : window.innerHeight) - reserved, 560));
+        const reserved = mobile ? 260 : 200;
+        const viewportH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        const maxW = Math.max(220, Math.min(shell ? shell.clientWidth : window.innerWidth - 24, 1100));
+        const maxH = Math.max(140, Math.min(viewportH - reserved, 560));
         const aspect = GAME_W / GAME_H;
         let w = maxW;
         let h = w / aspect;
@@ -1424,8 +1493,10 @@
             h = maxH;
             w = h * aspect;
         }
-        canvas.style.width = Math.floor(w) + 'px';
-        canvas.style.height = Math.floor(h) + 'px';
+        w = Math.floor(w);
+        h = Math.round(w / aspect);
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
     }
 
     function bindKey(code, down) {
@@ -1593,7 +1664,7 @@
         const x = (e.clientX - rect.left) * (GAME_W / rect.width);
         const y = (e.clientY - rect.top) * (GAME_H / rect.height);
         if (x >= GAME_W / 2 - 210 && x <= GAME_W / 2 + 210 && y >= notification.y && y <= notification.y + 48) {
-            window.open(notification.link, '_blank');
+            window.open(notification.link, '_blank', 'noopener,noreferrer');
             notification = null;
         }
     });
