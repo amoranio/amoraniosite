@@ -56,6 +56,8 @@
 html {
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
+    /* Clears the sticky topbar so anchored sections do not land underneath it. */
+    scroll-padding-top: 5rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -686,6 +688,8 @@ button {
 
 @media (max-width: 620px) {
     .stage__glass { display: none; }
+    /* Hand the page gutter back to the play area on phones. */
+    .arcade .shell { padding-inline: 0.5rem; }
 }
 
 /* ---- boss bar ---- */
@@ -758,6 +762,21 @@ button {
     opacity: 0;
     translate: -50% 12px;
     transition: opacity 0.35s ease, translate 0.35s ease;
+}
+
+/* The touch pad owns the bottom of the stage, so dock the prompt up top and
+   drop the keyboard hint that no longer applies. */
+body.has-touch .link-prompt {
+    top: 15%;
+    bottom: auto;
+}
+
+body.has-touch .link-prompt.is-out {
+    translate: -50% -12px;
+}
+
+body.has-touch .link-prompt kbd {
+    display: none;
 }
 
 .link-prompt__tag {

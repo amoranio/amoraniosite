@@ -21,7 +21,9 @@
      * between 4:3 and 16:9 so a portrait phone gets a taller play area instead
      * of a letterbox slot. */
     const VIEW_H = 540;
-    const VIEW_W_MIN = 720;
+    // Portrait phones are width-bound, so allowing a narrower logical view lets
+    // the stage grow taller instead of leaving most of the screen empty.
+    const VIEW_W_MIN = 600;
     const VIEW_W_MAX = 960;
     let VIEW_W = VIEW_W_MAX;
     const STEP_MS = 1000 / 60;
