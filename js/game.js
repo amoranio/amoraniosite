@@ -234,10 +234,10 @@
                 makeBlock(1488, 220, 'badmcp')
             ],
             enemies: [
-                { type: 'crawler', x: 620, y: 0 },
-                { type: 'crawler', x: 1080, y: 0 },
-                { type: 'crawler', x: 1680, y: 0 },
-                { type: 'crawler', x: 2140, y: 0 }
+                { type: 'crawler', x: 640, y: 0, minX: 560, maxX: 760 },
+                { type: 'crawler', x: 1080, y: 0, minX: 980, maxX: 1220 },
+                { type: 'crawler', x: 1680, y: 0, minX: 1580, maxX: 1820 },
+                { type: 'crawler', x: 2140, y: 0, minX: 2040, maxX: 2300 }
             ],
             pickups: [{ type: 'weapon', x: 584, y: 100 }],
             coins: [
@@ -403,7 +403,9 @@
                 hp: s.hp,
                 stompable: s.stompable,
                 vx: e.type === 'drone' ? 1.4 : (e.type === 'brute' ? 1.05 : 1.15),
-                facing: e.x < 500 ? 1 : -1,
+                facing: 1,
+                minX: Math.max(e.minX != null ? e.minX : e.x - 90, 40),
+                maxX: e.maxX != null ? e.maxX : e.x + 120,
                 frame: 0,
                 t: Math.random() * 100,
                 alive: true,
@@ -564,10 +566,9 @@
                 if (e.x < 40 || e.x > worldWidth - 60) e.facing *= -1;
             } else {
                 const next = e.x + e.vx * e.facing;
-                const nextMid = next + e.w / 2;
                 const ledge = inPit(next, e.w);
                 const wall = pipes.some((p) => aabb(next, e.y, e.w, e.h, p.x, p.y, p.width, p.height));
-                if (ledge || wall || next < 20 || next > worldWidth - e.w - 20) e.facing *= -1;
+                if (ledge || wall || next < e.minX || next + e.w > e.maxX) e.facing *= -1;
                 else e.x = next;
                 e.y = GAME_H - GROUND_HEIGHT - e.h;
                 if (inPit(e.x, e.w)) e.facing *= -1;
