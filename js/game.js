@@ -1483,7 +1483,7 @@
         const isCoarse = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
         const isNarrow = window.innerWidth <= 768;
         const mobile = isCoarse || isNarrow;
-        const reserved = mobile ? 260 : 200;
+        const reserved = mobile ? 230 : 170;
         const viewportH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
         const maxW = Math.max(220, Math.min(shell ? shell.clientWidth : window.innerWidth - 24, 1100));
         const maxH = Math.max(140, Math.min(viewportH - reserved, 560));
