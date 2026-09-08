@@ -31,7 +31,9 @@
     const GRAVITY = 0.72;
     const MAX_FALL = 15;
     const JUMP_V = -15.2;
-    const JUMP_CUT_V = -10.5;   // a tap still gets you a useful hop
+    // A tap must still clear a reward block one tile above head height (~100px),
+    // or players who never hold the key conclude the punch mechanic is broken.
+    const JUMP_CUT_V = -13;
     const RUN_ACCEL = 0.85;
     const AIR_ACCEL = 0.55;
     const MAX_RUN = 4.7;

@@ -269,8 +269,9 @@
                 { x: 2560, y: 372, w: 130, h: 22, axis: 'x', range: 150, speed: 0.7, phase: 2.1 }
             ],
             blocks: [
-                // Clear of the metal step at 336, which left no headroom under it.
-                { x: 264, y: 240, kind: 'crate', reward: 'weapon:spread' },
+                // Clear of the metal step at 336, which left no headroom under it,
+                // and low enough that a tap jump reaches the level's weapon.
+                { x: 264, y: 252, kind: 'crate', reward: 'weapon:spread' },
                 { x: 1080, y: 252, kind: 'link', link: 'github' },
                 { x: 2016, y: 228, kind: 'crate', reward: 'heart' },
                 { x: 3048, y: 240, kind: 'link', link: 'exnoscan' },
@@ -322,9 +323,10 @@
                 run(1104, 276, 2, 'metal'),
                 [solid(1296, 384, 110, 22, 'platform')],
                 [solid(1464, 300, 168, 22, 'platform')],
-                // Gap at 1728 leaves room to punch the clearQR link block.
-                run(1680, 228, 1, 'brick'),
-                run(1776, 228, 1, 'brick'),
+                // Gap at 1728 leaves room to punch the clearQR link block; the row
+                // sits at 252 so a tap jump reaches it.
+                run(1680, 252, 1, 'brick'),
+                run(1776, 252, 1, 'brick'),
                 [solid(1968, 348, 130, 22, 'platform')],
                 run(2160, 288, 2, 'metal'),
                 [solid(2352, 372, 120, 22, 'platform')],
@@ -348,9 +350,10 @@
                 { x: 2760, y: 312, w: 110, h: 22, axis: 'y', range: 110, speed: 0.55, phase: 2.4 }
             ],
             blocks: [
-                // Clear of the metal step at 288, which left no headroom under it.
-                { x: 216, y: 240, kind: 'crate', reward: 'weapon:pulse' },
-                { x: 1728, y: 228, kind: 'link', link: 'clearqr' },
+                // Clear of the metal step at 288, which left no headroom under it,
+                // and low enough that a tap jump reaches the level's weapon.
+                { x: 216, y: 252, kind: 'crate', reward: 'weapon:pulse' },
+                { x: 1728, y: 252, kind: 'link', link: 'clearqr' },
                 // Was hanging over the pit at 2760-2880 with nowhere to stand.
                 { x: 2352, y: 240, kind: 'crate', reward: 'heart' },
                 { x: 3504, y: 252, kind: 'crate', reward: 'coins' }
