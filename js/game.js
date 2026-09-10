@@ -1,6 +1,15 @@
 (() => {
     'use strict';
 
+    const storage = window.amoranStorage;
+    let enabled = true;
+    let gameMode = 'classic';
+    let gameTheme = 'neon';
+    let remainingFrames = 90 * 60;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const backdrop = new Image();
+    backdrop.src = 'assets/cyber-rooftop.jpg';
+
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
@@ -55,6 +64,8 @@
         dirtDark: '#8a3408'
     };
 
+    const originalColors = { ...COLORS };
+
     const LINKS = [
         { id: 'linkedin', url: 'https://www.linkedin.com/in/ashleymoran', label: 'in', name: 'LinkedIn' },
         { id: 'twitter', url: 'https://x.com/amoranio', label: 'X', name: 'X' },
@@ -80,7 +91,7 @@
 
     const audio = {
         ctx: null,
-        muted: localStorage.getItem('amoran-mute') === '1',
+        muted: storage.get('amoran-mute') === '1',
         ensure() {
             if (!this.ctx) {
                 const AC = window.AudioContext || window.webkitAudioContext;
@@ -121,7 +132,7 @@
                 ? '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>'
                 : '<path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
         }
-        localStorage.setItem('amoran-mute', audio.muted ? '1' : '0');
+        storage.set('amoran-mute', audio.muted ? '1' : '0');
     }
 
     const keys = { left: false, right: false, jump: false, fire: false };
@@ -146,7 +157,7 @@
     };
 
     let cameraX = 0;
-    let currentCharacter = localStorage.getItem('amoran-char') || 'mario';
+    let currentCharacter = storage.get('amoran-char') || 'ash';
     let lives = 3;
     let coins = 0;
     let hasWeapon = false;
@@ -378,6 +389,7 @@
         flagX = def.flagX;
         skyTop = def.skyTop;
         skyBot = def.skyBot;
+        remainingFrames = 90 * 60;
         pits = def.pits.map((p) => ({ ...p }));
         clouds = def.clouds.map((c) => ({ ...c }));
         hills = def.hills.map((h) => ({ ...h }));
@@ -402,7 +414,7 @@
                 h: s.h,
                 hp: s.hp,
                 stompable: s.stompable,
-                vx: e.type === 'drone' ? 1.4 : (e.type === 'brute' ? 1.05 : 1.15),
+                vx: (e.type === 'drone' ? 1.4 : (e.type === 'brute' ? 1.05 : 1.15)) * (gameMode === 'overclock' ? 1.5 : 1),
                 facing: 1,
                 minX: Math.max(e.minX != null ? e.minX : e.x - 90, 40),
                 maxX: e.maxX != null ? e.maxX : e.x + 120,
@@ -426,6 +438,7 @@
         fireCooldown = 0;
         levelLocked = false;
         if (worldChip) worldChip.textContent = def.chip;
+        applyTheme(gameTheme);
     }
 
     function showBanner(text, timer) {
@@ -453,7 +466,7 @@
     }
 
     function openLink(name, url) {
-        notification = { text: name, link: url, timer: 70, y: -50 };
+        notification = { text: name, link: url, timer: 360, y: -50 };
         audio.hit();
     }
 
@@ -483,7 +496,7 @@
     }
 
     function hurtPlayer(fromX) {
-        if (player.invuln > 0 || player.deadTimer > 0) return;
+        if (gameMode === 'training' || player.invuln > 0 || player.deadTimer > 0) return;
         lives -= 1;
         player.invuln = 90;
         player.vy = -8;
@@ -632,7 +645,16 @@
     }
 
     function update() {
-        if (!started || anyOverlayOpen()) return;
+        if (!enabled || document.hidden || !started || anyOverlayOpen()) return;
+        if (gameMode === 'overclock' && player.deadTimer <= 0 && --remainingFrames <= 0) {
+            lives = 0;
+            overlays.over.classList.add('active');
+            document.getElementById('overTitle').textContent = 'TRACE COMPLETE';
+            document.getElementById('overSub').textContent = 'The 90-second window closed. Retry this world.';
+            document.getElementById('continueBtn').textContent = 'RETRY WORLD';
+            clearInput();
+            return;
+        }
         tick++;
         if (shake > 0) shake--;
         if (fireCooldown > 0) fireCooldown--;
@@ -653,10 +675,10 @@
         }
 
         if (keys.left) {
-            player.vx = -MOVE_SPEED;
+            player.vx = -MOVE_SPEED * (gameMode === 'overclock' ? 1.2 : 1);
             player.facing = -1;
         } else if (keys.right) {
-            player.vx = MOVE_SPEED;
+            player.vx = MOVE_SPEED * (gameMode === 'overclock' ? 1.2 : 1);
             player.facing = 1;
         } else {
             player.vx *= 0.78;
@@ -722,7 +744,7 @@
         }
 
         if (player.y > GAME_H + 40) {
-            lives -= 1;
+            if (gameMode !== 'training') lives -= 1;
             shake = 12;
             audio.death();
             if (lives <= 0) {
@@ -853,7 +875,6 @@
         notification.timer--;
         if (notification.y < 56) notification.y += 5;
         if (notification.timer <= 0) {
-            window.open(notification.link, '_blank', 'noopener,noreferrer');
             notification = null;
         }
     }
@@ -1363,6 +1384,11 @@
         ctx.font = '9px "Press Start 2P"';
         ctx.fillText(levelName, 110, 21);
 
+        if (gameMode !== 'classic') {
+            ctx.fillStyle = COLORS.coin;
+            ctx.font = '14px monospace';
+            ctx.fillText(gameMode === 'training' ? 'TRAINING / ∞' : 'TRACE ' + Math.ceil(remainingFrames / 60) + 's', 535, 21);
+        }
         for (let i = 0; i < 3; i++) drawHeart(GAME_W - 228 + i * 22, 12, i < lives);
 
         if (hasWeapon) {
@@ -1382,7 +1408,7 @@
         ctx.font = '11px "Press Start 2P"';
         ctx.textAlign = 'center';
         ctx.fillStyle = '#fff';
-        ctx.fillText('Opening ' + notification.text + '...', GAME_W / 2, notification.y + 30);
+        ctx.fillText('Visit ' + notification.text + ' →', GAME_W / 2, notification.y + 30);
     }
 
     function drawBanner() {
@@ -1407,6 +1433,21 @@
     }
 
     function drawSky() {
+        if (gameTheme !== 'classic') {
+            ctx.fillStyle = gameTheme === 'anime' ? '#170f29' : '#081a1c';
+            ctx.fillRect(0, 0, GAME_W, GAME_H);
+            if (backdrop.complete && backdrop.naturalWidth) {
+                ctx.globalAlpha = gameTheme === 'anime' ? 0.55 : 0.3;
+                ctx.drawImage(backdrop, 0, 0, GAME_W, GAME_H);
+                ctx.globalAlpha = 1;
+            }
+            ctx.strokeStyle = gameTheme === 'anime' ? '#ce9bf21c' : '#a5ffa21c';
+            ctx.lineWidth = 1;
+            for (let x = -(cameraX * 0.2 % 50); x < GAME_W; x += 50) {
+                ctx.beginPath(); ctx.moveTo(x, 40); ctx.lineTo(x, GAME_H); ctx.stroke();
+            }
+            return;
+        }
         const g = ctx.createLinearGradient(0, 0, 0, GAME_H);
         g.addColorStop(0, skyTop);
         g.addColorStop(1, skyBot);
@@ -1433,16 +1474,16 @@
         const camStore = cameraX;
         cameraX = Math.round(cameraX);
         ctx.save();
-        if (shake) {
+        if (shake && !reducedMotion.matches) {
             ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
         }
         drawSky();
         const cloudPar = cameraX * 0.28;
-        for (const c of clouds) {
+        for (const c of gameTheme === 'classic' ? clouds : []) {
             const x = c.x - cloudPar;
             if (x > -120 && x < GAME_W + 120) drawCloud(x, c.y, c.size);
         }
-        drawHills();
+        if (gameTheme === 'classic') drawHills();
         drawGround();
         for (const b of bricks) drawBrick(b.x, b.y, b.width, b.height);
         for (const m of movers) {
@@ -1472,32 +1513,23 @@
         cameraX = camStore;
     }
 
-    function loop() {
-        update();
-        draw();
+    let lastFrame = 0;
+    let accumulator = 0;
+    function loop(now = 0) {
+        accumulator += Math.min(100, now - lastFrame);
+        lastFrame = now;
+        // Preserve the original 60 Hz physics on high-refresh displays.
+        while (accumulator >= 1000 / 60) {
+            update();
+            accumulator -= 1000 / 60;
+        }
+        if (enabled && !document.hidden) draw();
         requestAnimationFrame(loop);
     }
 
     function resizeCanvas() {
-        const shell = document.querySelector('.stage-shell');
-        const isCoarse = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-        const isNarrow = window.innerWidth <= 768;
-        const mobile = isCoarse || isNarrow;
-        const reserved = mobile ? 230 : 170;
-        const viewportH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        const maxW = Math.max(220, Math.min(shell ? shell.clientWidth : window.innerWidth - 24, 1100));
-        const maxH = Math.max(140, Math.min(viewportH - reserved, 560));
-        const aspect = GAME_W / GAME_H;
-        let w = maxW;
-        let h = w / aspect;
-        if (h > maxH) {
-            h = maxH;
-            w = h * aspect;
-        }
-        w = Math.floor(w);
-        h = Math.round(w / aspect);
-        canvas.style.width = w + 'px';
-        canvas.style.height = h + 'px';
+        canvas.style.width = '100%';
+        canvas.style.height = 'auto';
     }
 
     function bindKey(code, down) {
@@ -1514,12 +1546,13 @@
     }
 
     document.addEventListener('keydown', (e) => {
+        if (!enabled || /^(INPUT|SELECT|TEXTAREA|BUTTON|A)$/.test(e.target.tagName)) return;
         if (e.code === 'Escape' && started && !overlays.title.classList.contains('active') && !overlays.character.classList.contains('active') && !overlays.sites.classList.contains('active') && !overlays.over.classList.contains('active')) {
             overlays.pause.classList.toggle('active');
             return;
         }
-        if (anyOverlayOpen()) return;
-        if (bindKey(e.code, true)) e.preventDefault();
+        if (anyOverlayOpen() || document.activeElement !== canvas) return;
+        if (bindKey(e.code, true) || ['KeyA', 'KeyD', 'KeyW', 'KeyX', 'KeyF', 'ShiftLeft', 'ShiftRight'].includes(e.code)) e.preventDefault();
     });
     document.addEventListener('keyup', (e) => bindKey(e.code, false));
 
@@ -1557,10 +1590,11 @@
     }
 
     function setCharacter(name) {
-        currentCharacter = name;
-        localStorage.setItem('amoran-char', name);
+        currentCharacter = ['mario', 'ash', 'maggie'].includes(name) ? name : 'ash';
+        storage.set('amoran-char', currentCharacter);
         document.querySelectorAll('.character-option').forEach((el) => {
-            el.classList.toggle('selected', el.dataset.character === name);
+            el.classList.toggle('selected', el.dataset.character === currentCharacter);
+            el.setAttribute('aria-pressed', String(el.dataset.character === currentCharacter));
         });
     }
 
@@ -1568,6 +1602,7 @@
         keys.left = keys.right = keys.jump = keys.fire = false;
         jumpPressed = false;
         firePressed = false;
+        jumpBuffer = 0;
     }
 
     function beginPlay() {
@@ -1579,10 +1614,11 @@
         if (!started) {
             lives = 3;
             coins = 0;
-            hasWeapon = false;
+            hasWeapon = gameMode !== 'classic';
             loadLevel(0);
             started = true;
         }
+        canvas.focus({ preventScroll: true });
     }
 
     document.getElementById('playBtn').addEventListener('click', () => {
@@ -1613,7 +1649,7 @@
         overlays.character.classList.add('active');
         drawCharacterPreviews();
     });
-    document.getElementById('resumeBtn').addEventListener('click', () => overlays.pause.classList.remove('active'));
+    document.getElementById('resumeBtn').addEventListener('click', () => { overlays.pause.classList.remove('active'); clearInput(); canvas.focus({ preventScroll: true }); });
     document.getElementById('closeSites').addEventListener('click', () => {
         overlays.sites.classList.remove('active');
         if (overlays.sites.dataset.from === 'title' && !started) overlays.title.classList.add('active');
@@ -1628,10 +1664,12 @@
     document.getElementById('continueBtn').addEventListener('click', () => {
         overlays.over.classList.remove('active');
         document.getElementById('continueBtn').textContent = 'CONTINUE';
+        clearInput();
+        canvas.focus({ preventScroll: true });
         if (banner && banner.win) {
             lives = 3;
             coins = 0;
-            hasWeapon = false;
+            hasWeapon = gameMode !== 'classic';
             loadLevel(0);
             banner = null;
             return;
@@ -1670,12 +1708,78 @@
         }
     });
 
+    function applyTheme(theme) {
+        gameTheme = ['classic', 'anime', 'neon'].includes(theme) ? theme : 'neon';
+        Object.assign(COLORS, originalColors);
+        if (gameTheme !== 'classic') Object.assign(COLORS, {
+            coin: gameTheme === 'anime' ? '#e9adff' : '#bafa82',
+            brick: '#243638', brickDark: '#152629', brickLight: '#618b7b',
+            q: gameTheme === 'anime' ? '#995bd3' : '#509363', qDark: '#233e34', qLight: '#d8ffb3',
+            pipe: '#274a45', pipeDark: '#162b2e', pipeLight: '#63bd8b',
+            grass: gameTheme === 'anime' ? '#bf89e8' : '#8fc88b', grassDark: '#334641',
+            dirt: '#14252c', dirtDark: '#091920', crawler: '#715996', crawlerDark: '#403451', crawlerLight: '#caa4eb'
+        });
+        if (gameTheme !== 'classic') skyBot = gameTheme === 'anime' ? '#170f29' : '#081a1c';
+        else skyBot = LEVELS[levelIndex].skyBot;
+    }
+    function resetRun() {
+        clearInput();
+        started = false;
+        banner = null;
+        lives = 3;
+        coins = 0;
+        hasWeapon = gameMode !== 'classic';
+        Object.values(overlays).forEach(el => el.classList.remove('active'));
+        loadLevel(0);
+        applyTheme(gameTheme);
+        document.getElementById('continueBtn').textContent = 'CONTINUE';
+        overlays.title.classList.add('active');
+    }
+    window.Platformer = {
+        setEnabled(value) {
+            enabled = value;
+            clearInput();
+            if (!value && started && !anyOverlayOpen()) overlays.pause.classList.add('active');
+        },
+        setMode(mode) { gameMode = ['classic', 'overclock', 'training'].includes(mode) ? mode : 'classic'; resetRun(); },
+        setTheme: applyTheme,
+        isPaused: () => overlays.pause.classList.contains('active'),
+        restart: resetRun,
+        pause() {
+            clearInput();
+            if (started && !anyOverlayOpen()) overlays.pause.classList.add('active');
+        },
+        togglePause() {
+            clearInput();
+            if (!started) return;
+            if (overlays.pause.classList.contains('active')) { overlays.pause.classList.remove('active'); canvas.focus({ preventScroll: true }); }
+            else if (!anyOverlayOpen()) overlays.pause.classList.add('active');
+        }
+    };
+    window.addEventListener('blur', () => window.Platformer.pause());
+    document.addEventListener('visibilitychange', () => { if (document.hidden) window.Platformer.pause(); });
+    // These panels are inline game screens, not page-blocking modals. Keep the
+    // global game selector and restore control reachable while moving focus.
+    const panelObserver = new MutationObserver(records => {
+        const active = records.map(r => r.target).find(el => el.classList.contains('active'));
+        clearInput();
+        if (active && enabled) active.querySelector('button, a')?.focus({ preventScroll: true });
+        else if (enabled && started && !anyOverlayOpen()) canvas.focus({ preventScroll: true });
+        if (enabled) document.getElementById('pauseGame').textContent = overlays.pause.classList.contains('active') ? 'Resume' : 'Pause';
+    });
+    Object.values(overlays).forEach(el => {
+        el.setAttribute('role', 'region');
+        el.setAttribute('aria-label', el.querySelector('h2').textContent);
+        panelObserver.observe(el, { attributes: true, attributeFilter: ['class'] });
+    });
+
     setCharacter(currentCharacter);
     syncMuteUI();
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     if (window.visualViewport) window.visualViewport.addEventListener('resize', resizeCanvas);
     loadLevel(0);
+    applyTheme(gameTheme);
     started = false;
     drawCharacterPreviews();
     loop();
