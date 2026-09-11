@@ -4,11 +4,11 @@ Ashley Moran's site: three browser games and links to projects and profiles. Pla
 
 ## Site
 
-`index.html` opens directly on the arcade. The design uses black surfaces, strong white type, outlined controls, and restrained green accents, taking visual cues from [SpaceX](https://www.spacex.com/). The platformer retains its original pixel characters, colourful blocks and pipes, hills, clouds, terrain, and three worlds, now with a night sky.
+`index.html` opens directly into a playable, full-viewport Block Runner world. The canvas adapts to portrait, landscape, and ultrawide screens without stretching sprites or changing physics; portrait views add sky above the original playfield. Touch controls sit over the ground, and there are no persistent navigation or game-selection bars. The design uses black surfaces, strong white type, outlined controls, and restrained green accents, taking visual cues from [SpaceX](https://www.spacex.com/). The platformer retains its original pixel characters, colourful blocks and pipes, hills, clouds, terrain, and three worlds, now with a night sky.
 
 There is one fixed visual theme: Neon terminal. There is no persona chooser, professional portfolio, anime artwork, theme selector, or corruption effect. Old `play.html` and `professional.html` bookmarks redirect to the homepage, including without JavaScript. Previously saved persona and theme choices are discarded without changing scores, character selection, or sound preferences.
 
-LinkedIn, X, GitHub, Exnoscan, ClearQR, and badMCP are available from the Links section and the in-game links panel. The original `extensions/support.txt`, `quickGroup/privacy.txt`, custom domain, and Pages deployment are unchanged.
+Tap the floating **Games** portal or press **G** to fan out the three games over the paused world. The cards show previews of the game states. Close it, press G again, or press Escape to return. Difficulty, restart, character, sound, controls, and links live in this on-demand menu. Native dialogs handle keyboard focus and keep the game underneath inactive. LinkedIn, X, GitHub, Exnoscan, ClearQR, and badMCP are available there and in the runner’s links panel. The original `extensions/support.txt`, `quickGroup/privacy.txt`, custom domain, and Pages deployment are unchanged.
 
 ## Games
 
@@ -23,8 +23,8 @@ The difficulty selector changes gameplay, not the site's visual theme.
 - Block Runner: WASD/arrows to move, Space/W/Up to jump, F/X/Shift to fire after collecting the pulse star. Keyboard gameplay requires focus on the canvas. Touch controls are included.
 - Packet Snake: arrows/WASD or directional touch buttons.
 - Neural Breach: click/tap the pads or press 1–9.
-- Pause/Resume, Escape, and Restart are available. Games pause when the tab loses focus. A resumed memory game replays its sequence. Changing difficulty starts a fresh run. Switching away from the platformer pauses it; switching mini-games resets them.
-- Best scores are stored on this device per mini-game and difficulty when browser storage is available. Discovered links open only on a deliberate click.
+- Pause/Resume, Escape, and Restart are available. Games pause when the tab loses focus. A resumed memory game replays its sequence. Changing difficulty starts a fresh run. Switching games preserves each current run until a restart or difficulty change. Closing the game menu resumes an active run; deliberately paused runs and games that lost tab focus stay paused. A mini-game starts on first selection.
+- Best scores are stored on this device per mini-game and difficulty when browser storage is available. Hitting a link block pauses the runner and attempts to open its URL in a new tab. A persistent dialog with a normal `target="_blank"` anchor remains available if a popup blocker prevents that attempt; Resume returns to the exact run. Browser policies can require that additional click. The game does not rely on a temporary canvas notification or claim to detect popup success from the `noopener` return value.
 
 ## Development
 
@@ -41,4 +41,4 @@ Open `http://127.0.0.1:4173/`. No install is required.
 
 `js/game.js` contains the original platformer and its lifecycle/difficulty API. `js/arcade-core.js` contains DOM-independent mini-game rules. `js/arcade.js` handles game selection, input, timers, and scoring. `css/arcade.css` is the single stylesheet.
 
-Tests cover game rules, difficulty behavior, input isolation, timer cleanup, preference migration and storage failures, legacy redirects, link preservation, HTML structure, and asset references. The lifecycle tests use an event/canvas harness, not a visual browser test. GitHub runs these checks on pull requests.
+Tests cover game rules, difficulty behavior, viewport sizing and rotation, portal pause/resume, retained game sessions, link-block collisions and popup failures, input isolation, timer cleanup, preference migration and storage failures, legacy redirects, link preservation, HTML structure, and asset references. The lifecycle tests use an event/canvas harness, not a visual browser test. GitHub runs these checks on pull requests.
