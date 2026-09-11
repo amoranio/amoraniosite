@@ -3,6 +3,9 @@
     const $ = id => document.getElementById(id);
     const core = window.ArcadeCore;
     const storage = window.amoranStorage;
+    const portal = $('gamePortal');
+    const sessions = {};
+    let resumeMiniOnClose = false;
     let selected = 'platformer';
     let mode = 'classic';
     let snake = core.createSnake();
@@ -20,7 +23,7 @@
         memory: {classic: 'Watch the sequence, then repeat it. Each round adds one more node.', overclock: 'Shorter signals. The same growing sequence, with less time to memorise it.', training: 'Slower signals. A missed node replays the same sequence for another try.'}
     };
     const notes = {
-        platformer: 'Collect the pulse star to fire. Hit question blocks to discover links.',
+        platformer: 'WASD / arrows to move · Space to jump · F to fire after collecting the pulse star. Hit question blocks to open links.',
         snake: 'Arrow keys or WASD to steer. Touch the direction buttons on mobile. Each packet adds 10 points.',
         memory: 'Watch the numbered nodes, then repeat their order. Click, tap, or press 1–9.'
     };
@@ -136,8 +139,8 @@
     function resetMini() {
         clearTimers();
         running = paused = false;
-        snake = core.createSnake(mode);
-        memory = core.createMemory(mode);
+        if (selected === 'snake') snake = core.createSnake(mode);
+        if (selected === 'memory') memory = core.createMemory(mode);
         lockPads(true);
         $('miniStart').hidden = false;
         $('miniStart').textContent = 'Start game';
@@ -161,54 +164,146 @@
         paused = force || !paused;
         clearTimers();
         $('pauseGame').textContent = paused ? 'Resume' : 'Pause';
-        if (paused) { lockPads(true); $('miniStatus').textContent = 'Paused · Resume when you’re ready.'; }
+        $('miniStart').hidden = !paused;
+        $('miniStart').textContent = 'Resume';
+        if (paused) { lockPads(true); $('miniStatus').textContent = 'Paused'; }
         else if (selected === 'snake') {
             $('miniStatus').textContent = 'Collect the green packets.';
             canvas.focus({preventScroll: true});
             snakeTimer = setTimeout(snakeStep, core.snakeDelay(mode, snake.score));
-        } else if (memory.phase === 'complete') nextRound();
+        } else if (memory.phase === 'complete' || memory.round === 0) nextRound();
         else replayMemory();
     }
     function describe() {
         $('modeDescription').textContent = descriptions[selected][mode];
         $('fieldNote').textContent = notes[selected];
     }
+    function previewGames() {
+        window.Platformer.preview($('runnerPreview'));
+        $('snakePreview').getContext('2d').drawImage(canvas, 0, 0, 480, 240);
+        const preview = $('memoryPreview').getContext('2d');
+        preview.fillStyle = '#030b10'; preview.fillRect(0, 0, 480, 240);
+        for (let i = 0; i < 9; i++) {
+            const x = 65 + (i % 3) * 120, y = 12 + Math.floor(i / 3) * 75;
+            preview.fillStyle = pads[i].classList.contains('lit') ? '#8ef5ac' : '#142c24';
+            preview.fillRect(x, y, 110, 65);
+            preview.fillStyle = '#c4e2d3'; preview.font = '18px monospace'; preview.textAlign = 'center';
+            preview.fillText(String(i + 1).padStart(2, '0'), x + 55, y + 39);
+        }
+    }
+    function openPortal() {
+        if (portal.open || $('linkDialog').open) return;
+        resumeMiniOnClose = selected !== 'platformer' && running && !paused;
+        window.Platformer.setMenuOpen(true);
+        if (selected !== 'platformer') {
+            pauseMini(true);
+            $('pauseGame').textContent = running && !resumeMiniOnClose ? 'Resume' : 'Pause';
+        }
+        previewGames();
+        portal.showModal();
+        $('portalTrigger').setAttribute('aria-expanded', 'true');
+        document.querySelectorAll('[data-game]').forEach(button => {
+            if (button.dataset.game === selected) button.focus({preventScroll: true});
+        });
+    }
+    function closePortal(resume = true) {
+        if (portal.open) portal.close();
+        $('portalTrigger').setAttribute('aria-expanded', 'false');
+        window.Platformer.setMenuOpen(false);
+        if (resume && resumeMiniOnClose && selected !== 'platformer' && running && paused) pauseMini();
+        else if (selected !== 'platformer') {
+            if (!running || paused) $('miniStart').focus({preventScroll: true});
+            else if (selected === 'snake') canvas.focus({preventScroll: true});
+        }
+        resumeMiniOnClose = false;
+    }
+    $('portalTrigger').addEventListener('click', openPortal);
+    $('closePortal').addEventListener('click', () => closePortal());
+    portal.addEventListener('cancel', e => { e.preventDefault(); closePortal(); });
+    portal.addEventListener('click', e => {
+        if (e.target !== portal) return;
+        const rect = portal.getBoundingClientRect();
+        if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) closePortal();
+    });
     function chooseGame(game) {
+        if (game === selected) { closePortal(); return; }
+        if (selected !== 'platformer') {
+            sessions[selected] = {state: selected === 'snake' ? snake : memory, running, paused: portal.open ? !resumeMiniOnClose : paused};
+        }
+        clearTimers();
+        closePortal(false);
         selected = game;
-        window.Platformer.setEnabled(game === 'platformer');
         $('platformerPanel').hidden = game !== 'platformer';
         $('miniPanel').hidden = game === 'platformer';
+        $('runnerSettings').hidden = game !== 'platformer';
         $('snakeSurface').hidden = game !== 'snake';
         $('snakeControls').hidden = game !== 'snake';
         $('memorySurface').hidden = game !== 'memory';
         $('miniTitle').textContent = titles[game];
+        window.Platformer.setEnabled(game === 'platformer');
         document.querySelectorAll('[data-game]').forEach(button => {
             button.classList.toggle('selected', button.dataset.game === game);
             button.setAttribute('aria-pressed', String(button.dataset.game === game));
         });
-        resetMini();
-        if (game === 'platformer') $('pauseGame').textContent = window.Platformer.isPaused() ? 'Resume' : 'Pause';
+        if (game === 'platformer') {
+            running = paused = false;
+            $('pauseGame').textContent = window.Platformer.isPaused() ? 'Resume' : 'Pause';
+        } else if (sessions[game]) {
+            const saved = sessions[game];
+            if (game === 'snake') snake = saved.state;
+            else memory = saved.state;
+            running = saved.running;
+            paused = true;
+            score(game === 'snake' ? snake.score : Math.max(0, memory.round - (memory.phase === 'complete' ? 0 : 1)));
+            drawSnake();
+            $('miniStart').hidden = false;
+            $('miniStart').textContent = running ? 'Resume' : 'Play again';
+            $('miniStatus').textContent = running ? 'Paused' : 'Start another run.';
+            $('pauseGame').textContent = running ? 'Resume' : 'Pause';
+            if (running && !saved.paused) pauseMini();
+            else $('miniStart').focus({preventScroll: true});
+        } else startMini();
         describe();
     }
     document.querySelectorAll('[data-game]').forEach(button => button.addEventListener('click', () => chooseGame(button.dataset.game)));
     $('modeSelect').addEventListener('change', e => {
         mode = e.target.value;
+        for (const key of Object.keys(sessions)) delete sessions[key];
         window.Platformer.setMode(mode);
-        resetMini();
+        if (selected !== 'platformer') {
+            resetMini();
+            if (portal.open) { running = paused = true; resumeMiniOnClose = true; }
+            else startMini();
+        }
         describe();
     });
     $('restartGame').addEventListener('click', () => {
+        closePortal(false);
         if (selected === 'platformer') window.Platformer.restart();
-        else resetMini();
+        else { delete sessions[selected]; startMini(); }
     });
-    $('pauseGame').addEventListener('click', () => selected === 'platformer' ? window.Platformer.togglePause() : pauseMini());
-    $('miniStart').addEventListener('click', startMini);
+    $('pauseGame').addEventListener('click', () => {
+        // Opening the portal suspends a live mini-game without changing whether
+        // it should resume. The explicit Pause button changes that intention.
+        const shouldResume = portal.open && selected !== 'platformer' ? !resumeMiniOnClose : paused;
+        closePortal(false);
+        if (selected === 'platformer') window.Platformer.togglePause();
+        else if (running && paused === shouldResume) pauseMini();
+    });
+    ['settingsBtn', 'sitesBtn'].forEach(id => $(id).addEventListener('click', () => closePortal(false)));
+    $('miniStart').addEventListener('click', () => running && paused ? pauseMini() : startMini());
     document.querySelectorAll('[data-direction]').forEach(button => button.addEventListener('click', () => {
         if (running && !paused && selected === 'snake') core.turnSnake(snake, button.dataset.direction);
     }));
     const directions = {ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right'};
     document.addEventListener('keydown', e => {
-        if (e.code === 'Escape') {
+        if (e.code === 'KeyG' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !/^(SELECT|INPUT|TEXTAREA)$/.test(e.target.tagName)) {
+            e.preventDefault();
+            if (portal.open) closePortal(); else openPortal();
+            return;
+        }
+        if (portal.open || $('linkDialog').open) return;
+        if (e.code === 'Escape' && !e.repeat) {
             if (selected !== 'platformer') pauseMini();
             return;
         }
@@ -218,7 +313,7 @@
         }
         if (selected === 'memory' && /^Digit[1-9]$/.test(e.code) && !e.repeat) { e.preventDefault(); choosePad(Number(e.code.slice(-1)) - 1); }
     });
-    function suspend() { clearTimers(); if (selected !== 'platformer') pauseMini(true); window.Platformer.pause(); }
+    function suspend() { resumeMiniOnClose = false; clearTimers(); if (selected !== 'platformer') pauseMini(true); window.Platformer.pause(); }
     window.addEventListener('blur', suspend);
     window.addEventListener('pagehide', suspend);
     document.addEventListener('visibilitychange', () => { if (document.hidden) suspend(); });

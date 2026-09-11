@@ -10,47 +10,16 @@
 </head>
 <body>
     <a class="skip-link" href="#arcade">Skip to arcade</a>
-    <header class="site-header wrap">
-        <h1><a class="wordmark" href="index.html">AMORAN<span>.IO</span></a></h1>
-        <nav aria-label="Main navigation">
-            <a href="#arcade">Arcade</a>
-            <a href="#links">Links</a>
-            <a href="https://github.com/amoranio" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
-        </nav>
-    </header>
-    <main class="wrap" id="arcade">
-    <div class="game-tabs" role="group" aria-label="Choose a game">
-      <button type="button" class="game-tab selected" data-game="platformer" aria-pressed="true"><span>01</span> Block Runner</button>
-      <button type="button" class="game-tab" data-game="snake" aria-pressed="false"><span>02</span> Packet Snake</button>
-      <button type="button" class="game-tab" data-game="memory" aria-pressed="false"><span>03</span> Neural Breach</button>
-    </div>
-    <div class="arcade-toolbar">
-      <span class="terminal-label">NEON TERMINAL</span>
-      <label>Difficulty <select id="modeSelect"><option value="classic">Classic</option><option value="overclock">Overclock</option><option value="training">Training</option></select></label>
-      <button type="button" class="tool-button" id="restartGame">Restart</button>
-      <button type="button" class="tool-button" id="pauseGame">Pause</button>
-    </div>
-    <p class="mode-description" id="modeDescription">Three lives. Three worlds. Collect coins and reach the flag.</p>
+    <main id="arcade" class="arcade-viewport">
+    <a class="wordmark" href="index.html" aria-label="amoran.io home">AMORAN<span>.IO</span></a>
+    <button type="button" id="portalTrigger" class="portal-trigger" aria-haspopup="dialog" aria-controls="gamePortal" aria-expanded="false" aria-label="Swap games and open menu (G)"><span class="portal-orbit" aria-hidden="true"><i></i><i></i><i></i></span><span>GAMES <kbd>G</kbd></span></button>
     <section id="platformerPanel" class="game-panel" aria-label="Block Runner platformer">
     <div class="stage-shell">
         <div class="stage-frame">
-            <div class="stage-topbar">
-                <div class="chip" id="worldChip">WORLD 1-1</div>
-                <div class="icon-row">
-                    <button class="icon-btn" id="sitesBtn" title="Open site links" aria-label="Open site links">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
-                    </button>
-                    <button class="icon-btn" id="muteBtn" title="Toggle sound" aria-label="Toggle sound">
-                        <svg id="muteIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                    </button>
-                    <button class="icon-btn" id="settingsBtn" title="Character and settings" aria-label="Character and settings">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z"/></svg>
-                    </button>
-                </div>
-            </div>
-            <div class="stage has-overlay" id="gameStage">
-                <canvas id="gameCanvas" width="1000" height="500" tabindex="0" aria-label="Block Runner game. Arrow keys or WASD to move, Space to jump, F to fire, Escape to pause. Use Links below for all project links without playing.">Your browser does not support canvas. All project links are available in Links below.</canvas>
-    <div class="overlay active" id="titleOverlay">
+            <div class="runner-hud" aria-label="Run status"><span id="worldChip">WORLD 1-1</span><span id="runnerStats">COINS 00 · ♥ 3</span><span id="runnerMode"></span></div>
+            <div class="stage" id="gameStage">
+                <canvas id="gameCanvas" width="1000" height="500" tabindex="0" aria-label="Block Runner game. Arrow keys or WASD to move, Space to jump, F to fire, Escape to pause. Press G for games, controls, and project links.">Your browser does not support canvas. All project links are available in the Games menu.</canvas>
+    <div class="overlay" id="titleOverlay">
         <div class="overlay-content">
             <p class="eyebrow">01 / PLATFORMER</p><h2 class="overlay-title">BLOCK RUNNER</h2>
             <p class="overlay-sub">Three worlds. Collect coins, jump the gaps, and take on the bots.</p>
@@ -81,7 +50,7 @@
             </div>
             <label class="mute-row"><input type="checkbox" id="muteCheck"> Mute sound</label>
             <div class="btn-row">
-                <button class="close-btn" id="closeOverlay">START GAME</button>
+                <button class="close-btn" id="closeOverlay">PLAY</button>
             </div>
         </div>
     </div>
@@ -148,19 +117,6 @@
         </div>
     </div>
 
-    <div class="legend">
-        <details class="controls-box">
-            <summary>Controls</summary>
-            <div class="legend-row">
-                <span class="kbd">WASD / ARROWS move</span>
-                <span class="kbd">SPACE / W / UP jump</span>
-                <span class="kbd">X / F / SHIFT fire</span>
-                <span class="kbd">ESC pause</span>
-            </div>
-        </details>
-        <p class="popup-warning">Hit a block to discover a link. Click its notification to visit, or use Links below.</p>
-    </div>
-
     <div class="mobile-controls">
         <div class="d-pad">
             <button class="control-btn up" id="btnUp" aria-label="Jump">^</button>
@@ -181,10 +137,24 @@
       <div class="mini-message"><p id="miniStatus" role="status">Collect packets. Avoid the walls and your tail.</p><button class="button" id="miniStart">Start game</button></div>
       <div id="snakeControls" class="snake-controls" role="group" aria-label="Packet Snake directional controls"><button data-direction="up" aria-label="Move up">↑</button><button data-direction="left" aria-label="Move left">←</button><button data-direction="down" aria-label="Move down">↓</button><button data-direction="right" aria-label="Move right">→</button></div>
     </section>
-    <p class="game-note" id="fieldNote">Collect the pulse star to fire. Hit question blocks to discover links.</p>
-    <p class="score-note">Best scores are saved on this device.</p>
-    <section class="links-section" id="links" aria-labelledby="linksTitle">
-        <div class="section-heading"><span class="section-number">/ 04</span><h2 id="linksTitle">LINKS</h2></div>
+    </main>
+    <dialog id="gamePortal" class="game-portal" aria-labelledby="portalTitle">
+      <div class="portal-heading"><div><p class="eyebrow">AMORAN.IO / NEON TERMINAL</p><h1 id="portalTitle">PICK YOUR GAME.</h1></div><button type="button" id="closePortal" class="portal-close" aria-label="Close game menu">×</button></div>
+      <div class="game-deck" role="group" aria-label="Choose a game">
+        <button type="button" class="game-card selected" data-game="platformer" aria-pressed="true"><span class="card-number">01 / PLATFORMER</span><canvas class="card-scene" id="runnerPreview" width="480" height="240" aria-hidden="true"></canvas><span class="card-name">BLOCK<br>RUNNER</span><span class="card-action">ENTER WORLD <span aria-hidden="true">↗</span></span></button>
+        <button type="button" class="game-card" data-game="snake" aria-pressed="false"><span class="card-number">02 / SURVIVAL</span><canvas class="card-scene" id="snakePreview" width="480" height="240" aria-hidden="true"></canvas><span class="card-name">PACKET<br>SNAKE</span><span class="card-action">PLAY SNAKE <span aria-hidden="true">↗</span></span></button>
+        <button type="button" class="game-card" data-game="memory" aria-pressed="false"><span class="card-number">03 / MEMORY</span><canvas class="card-scene" id="memoryPreview" width="480" height="240" aria-hidden="true"></canvas><span class="card-name">NEURAL<br>BREACH</span><span class="card-action">PLAY MEMORY <span aria-hidden="true">↗</span></span></button>
+      </div>
+      <div class="portal-settings">
+        <label>Difficulty <select id="modeSelect"><option value="classic">Classic</option><option value="overclock">Overclock</option><option value="training">Training</option></select></label>
+        <button type="button" class="tool-button" id="pauseGame">Pause</button>
+        <button type="button" class="tool-button" id="restartGame">Restart</button>
+        <span id="runnerSettings"><button type="button" class="tool-button" id="settingsBtn">Character</button><button type="button" class="tool-button" id="sitesBtn">World links</button><button type="button" class="tool-button" id="muteBtn" aria-label="Toggle sound"><svg id="muteIcon" viewBox="0 0 24 24" aria-hidden="true"></svg><span>Sound</span></button></span>
+      </div>
+      <p class="mode-description" id="modeDescription">Three lives. Three worlds. Collect coins and reach the flag.</p>
+      <details class="controls-box"><summary>Controls</summary><p id="fieldNote">WASD / arrows to move · Space to jump · F to fire after collecting the pulse star.</p><p>G opens this menu · Escape pauses or goes back. Best scores are saved on this device.</p></details>
+    <details class="portal-links" id="links"><summary>Links <span aria-hidden="true">↗</span></summary>
+
         <div class="link-grid">
             <a href="https://exnoscan.com" target="_blank" rel="noopener noreferrer"><span>Exnoscan</span><small>exnoscan.com</small><span aria-hidden="true">↗</span></a>
             <a href="https://clearqr.exnoscan.com" target="_blank" rel="noopener noreferrer"><span>ClearQR</span><small>clearqr.exnoscan.com</small><span aria-hidden="true">↗</span></a>
@@ -193,9 +163,15 @@
             <a href="https://x.com/amoranio" target="_blank" rel="noopener noreferrer"><span>X</span><small>@amoranio</small><span aria-hidden="true">↗</span></a>
             <a href="https://www.linkedin.com/in/ashleymoran" target="_blank" rel="noopener noreferrer"><span>LinkedIn</span><small>Ashley Moran</small><span aria-hidden="true">↗</span></a>
         </div>
-    </section>
-    </main>
-    <footer class="site-footer wrap">© <span data-year>2026</span> Ashley Moran</footer>
+    </details>
+
+      <p class="portal-footnote">© <span data-year>2026</span> Ashley Moran</p>
+    </dialog>
+    <dialog id="linkDialog" class="link-dialog" aria-labelledby="linkTitle">
+      <p class="eyebrow">LINK BLOCK / RUN PAUSED</p><h2 id="linkTitle">LINK</h2><p id="linkAddress"></p>
+      <p class="link-help">Open in a new tab, then return to your run.</p>
+      <div class="btn-row"><a id="discoveredLink" class="close-btn" href="https://amoran.io" target="_blank" rel="noopener noreferrer">OPEN LINK ↗</a><button type="button" id="resumeLink" class="ghost-btn">RESUME GAME</button></div>
+    </dialog>
     <script src="js/site.js"></script>
     <script src="js/arcade-core.js"></script>
     <script src="js/game.js"></script>

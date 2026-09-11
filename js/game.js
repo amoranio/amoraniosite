@@ -3,6 +3,7 @@
 
     const storage = window.amoranStorage;
     let enabled = true;
+    let menuSuspended = false;
     let gameMode = 'classic';
     let remainingFrames = 90 * 60;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -11,7 +12,8 @@
     const ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
 
-    const GAME_W = 1000;
+    let GAME_W = 1000;
+    let skyExtension = 0;
     const GAME_H = 500;
     const GRAVITY = 0.58;
     const JUMP_FORCE = -14.8;
@@ -79,9 +81,12 @@
     };
 
     const worldChip = document.getElementById('worldChip');
+    const linkDialog = document.getElementById('linkDialog');
+    const runnerStats = document.getElementById('runnerStats');
+    const runnerMode = document.getElementById('runnerMode');
 
     function anyOverlayOpen() {
-        return Object.values(overlays).some((el) => el.classList.contains('active'));
+        return linkDialog.open || Object.values(overlays).some((el) => el.classList.contains('active'));
     }
 
     const audio = {
@@ -162,7 +167,6 @@
     let tick = 0;
     let shake = 0;
     let banner = null;
-    let notification = null;
     let particles = [];
     let projectiles = [];
     let enemies = [];
@@ -397,7 +401,6 @@
         coinsWorld = def.coins.map((c) => ({ ...c, taken: false, bob: Math.random() * Math.PI * 2 }));
         projectiles = [];
         particles = [];
-        notification = null;
         enemies = def.enemies.map((e) => {
             const s = enemyStats(e.type);
             const grounded = e.type !== 'drone';
@@ -460,9 +463,27 @@
     }
 
     function openLink(name, url) {
-        notification = { text: name, link: url, timer: 360, y: -50 };
+        // The world stops at the block. A real anchor remains available even if
+        // the browser refuses a new tab opened from the animation callback.
+        clearInput();
+        document.getElementById('linkTitle').textContent = name;
+        document.getElementById('linkAddress').textContent = new URL(url).hostname;
+        const anchor = document.getElementById('discoveredLink');
+        anchor.href = url;
+        anchor.textContent = 'OPEN ' + name.toUpperCase() + ' ↗';
+        if (!linkDialog.open) linkDialog.showModal();
+        anchor.focus({ preventScroll: true });
         audio.hit();
+        try { window.open(url, '_blank', 'noopener,noreferrer'); } catch (_) { /* The anchor is the fallback. */ }
     }
+
+    function resumeLink() {
+        linkDialog.close();
+        clearInput();
+        canvas.focus({ preventScroll: true });
+    }
+    document.getElementById('resumeLink').addEventListener('click', resumeLink);
+    linkDialog.addEventListener('cancel', e => { e.preventDefault(); resumeLink(); });
 
     function activateBlock(block) {
         if (block.hit) return;
@@ -639,7 +660,7 @@
     }
 
     function update() {
-        if (!enabled || document.hidden || !started || anyOverlayOpen()) return;
+        if (!enabled || menuSuspended || document.hidden || !started || anyOverlayOpen()) return;
         if (gameMode === 'overclock' && player.deadTimer <= 0 && --remainingFrames <= 0) {
             lives = 0;
             overlays.over.classList.add('active');
@@ -787,6 +808,7 @@
                 activateBlock(block);
                 player.vy = Math.abs(player.vy) * 0.28;
                 player.y = bottom + 1;
+                return;
             }
         }
 
@@ -845,7 +867,6 @@
         updateEnemies();
         updateProjectiles();
         updateParticles();
-        updateNotification();
         updateBanner();
 
         const target = player.x - GAME_W / 2 + player.width / 2;
@@ -861,15 +882,6 @@
             p.vy += 0.45;
             p.life--;
             if (p.life <= 0) particles.splice(i, 1);
-        }
-    }
-
-    function updateNotification() {
-        if (!notification) return;
-        notification.timer--;
-        if (notification.y < 56) notification.y += 5;
-        if (notification.timer <= 0) {
-            notification = null;
         }
     }
 
@@ -1356,53 +1368,10 @@
     }
 
     function drawHUD() {
-        ctx.fillStyle = 'rgba(8,8,16,0.52)';
-        ctx.fillRect(0, 0, GAME_W, 40);
-        ctx.fillStyle = 'rgba(255,255,255,0.08)';
-        ctx.fillRect(0, 39, GAME_W, 1);
-
-        ctx.fillStyle = COLORS.coin;
-        ctx.beginPath();
-        ctx.ellipse(22, 20, 7, 9, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#fff3a0';
-        ctx.fillRect(19, 16, 3, 5);
-
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.font = '11px "Press Start 2P"';
-        ctx.fillStyle = '#fff';
-        ctx.fillText(String(coins).padStart(3, '0'), 36, 21);
-
-        ctx.fillStyle = 'rgba(255,255,255,0.55)';
-        ctx.font = '9px "Press Start 2P"';
-        ctx.fillText(levelName, 110, 21);
-
-        if (gameMode !== 'classic') {
-            ctx.fillStyle = COLORS.coin;
-            ctx.font = '14px monospace';
-            ctx.fillText(gameMode === 'training' ? 'TRAINING / ∞' : 'TRACE ' + Math.ceil(remainingFrames / 60) + 's', 535, 21);
-        }
-        for (let i = 0; i < 3; i++) drawHeart(GAME_W - 228 + i * 22, 12, i < lives);
-
-        if (hasWeapon) {
-            ctx.fillStyle = COLORS.coin;
-            ctx.font = '9px "Press Start 2P"';
-            ctx.textAlign = 'right';
-            ctx.fillText('PULSE', GAME_W - 28, 21);
-        }
-    }
-
-    function drawNotification() {
-        if (!notification) return;
-        ctx.fillStyle = 'rgba(0,0,0,0.82)';
-        roundRect(GAME_W / 2 - 210, notification.y, 420, 48, 8);
-        ctx.fill();
-        ctx.fillStyle = COLORS.gold || COLORS.coin;
-        ctx.font = '11px "Press Start 2P"';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#fff';
-        ctx.fillText('Visit ' + notification.text + ' →', GAME_W / 2, notification.y + 30);
+        const stats = 'COINS ' + String(coins).padStart(2, '0') + ' · ♥ ' + lives + (hasWeapon ? ' · PULSE' : '');
+        const difficulty = gameMode === 'training' ? 'TRAINING / ∞' : gameMode === 'overclock' ? 'TRACE ' + Math.ceil(remainingFrames / 60) + 's' : '';
+        if (runnerStats.textContent !== stats) runnerStats.textContent = stats;
+        if (runnerMode.textContent !== difficulty) runnerMode.textContent = difficulty;
     }
 
     function drawBanner() {
@@ -1427,23 +1396,23 @@
     }
 
     function drawSky() {
-        const g = ctx.createLinearGradient(0, 0, 0, GAME_H);
+        const g = ctx.createLinearGradient(0, -skyExtension, 0, GAME_H);
         g.addColorStop(0, skyTop);
         g.addColorStop(1, skyBot);
         ctx.fillStyle = g;
-        ctx.fillRect(0, 0, GAME_W, GAME_H);
+        ctx.fillRect(0, -skyExtension, GAME_W, GAME_H + skyExtension);
         // A fixed night sky keeps the original parallax world legible.
         ctx.fillStyle = '#b9d8de';
         for (let i = 0; i < 65; i++) {
             const sx = ((i * 173 + 31 - cameraX * 0.06) % GAME_W + GAME_W) % GAME_W;
-            const sy = 48 + (i * 67 % 230);
+            const sy = 48 - skyExtension + (i * 67 % (230 + skyExtension));
             ctx.globalAlpha = 0.25 + (i % 4) * 0.15;
             ctx.fillRect(sx, sy, i % 5 === 0 ? 2 : 1, 2);
         }
         ctx.globalAlpha = 1;
         ctx.fillStyle = '#99bfc833';
         ctx.beginPath();
-        ctx.arc(820 - cameraX * 0.06, 104, 44, 0, Math.PI * 2);
+        ctx.arc(GAME_W * .82 - cameraX * 0.06, 104 - skyExtension * .65, 44, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = 'rgba(20, 40, 90, 0.22)';
         const mx = -cameraX * 0.15;
@@ -1462,7 +1431,8 @@
         const camStore = cameraX;
         cameraX = Math.round(cameraX);
         ctx.save();
-        if (shake && !reducedMotion.matches) {
+        ctx.translate(0, skyExtension);
+        if (shake && !menuSuspended && !anyOverlayOpen() && !reducedMotion.matches) {
             ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
         }
         drawSky();
@@ -1491,13 +1461,12 @@
         drawPlayer();
         ctx.restore();
         drawHUD();
-        drawNotification();
         drawBanner();
         const vg = ctx.createRadialGradient(GAME_W / 2, GAME_H / 2, 180, GAME_W / 2, GAME_H / 2, 620);
         vg.addColorStop(0, 'rgba(0,0,0,0)');
         vg.addColorStop(1, 'rgba(0,0,0,0.22)');
         ctx.fillStyle = vg;
-        ctx.fillRect(0, 0, GAME_W, GAME_H);
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         cameraX = camStore;
     }
 
@@ -1516,8 +1485,16 @@
     }
 
     function resizeCanvas() {
-        canvas.style.width = '100%';
-        canvas.style.height = 'auto';
+        const rect = document.getElementById('arcade').getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        // Preserve the original 500-unit playfield and its physics. Portrait
+        // screens gain sky; wide screens reveal more of the scrolling world.
+        GAME_W = Math.max(480, Math.round(rect.width / rect.height * GAME_H));
+        canvas.width = GAME_W;
+        canvas.height = Math.max(GAME_H, Math.round(GAME_W * rect.height / rect.width));
+        skyExtension = canvas.height - GAME_H;
+        ctx.imageSmoothingEnabled = false;
+        cameraX = Math.max(0, Math.min(cameraX, worldWidth - GAME_W));
     }
 
     function bindKey(code, down) {
@@ -1534,18 +1511,21 @@
     }
 
     document.addEventListener('keydown', (e) => {
-        if (!enabled) return;
-        if (e.code === 'Escape' && started && !overlays.title.classList.contains('active') && !overlays.character.classList.contains('active') && !overlays.sites.classList.contains('active') && !overlays.over.classList.contains('active')) {
+        if (!enabled || menuSuspended || linkDialog.open) return;
+        if (e.code === 'Escape' && !e.repeat && started && !overlays.title.classList.contains('active') && !overlays.character.classList.contains('active') && !overlays.sites.classList.contains('active') && !overlays.over.classList.contains('active')) {
+            clearInput();
             overlays.pause.classList.toggle('active');
+            if (!overlays.pause.classList.contains('active')) canvas.focus({ preventScroll: true });
             return;
         }
         if (/^(INPUT|SELECT|TEXTAREA|BUTTON|A)$/.test(e.target.tagName) || anyOverlayOpen() || document.activeElement !== canvas) return;
+        audio.ensure();
         if (bindKey(e.code, true) || ['KeyA', 'KeyD', 'KeyW', 'KeyX', 'KeyF', 'ShiftLeft', 'ShiftRight'].includes(e.code)) e.preventDefault();
     });
     document.addEventListener('keyup', (e) => bindKey(e.code, false));
 
     function addHold(btn, key) {
-        const on = (ev) => { ev.preventDefault(); keys[key] = true; audio.ensure(); };
+        const on = (ev) => { ev.preventDefault(); if (!enabled || menuSuspended || anyOverlayOpen()) return; keys[key] = true; audio.ensure(); };
         const off = (ev) => { ev.preventDefault(); keys[key] = false; };
         btn.addEventListener('touchstart', on, { passive: false });
         btn.addEventListener('touchend', off, { passive: false });
@@ -1609,12 +1589,7 @@
         canvas.focus({ preventScroll: true });
     }
 
-    document.getElementById('playBtn').addEventListener('click', () => {
-        audio.ensure();
-        overlays.title.classList.remove('active');
-        overlays.character.classList.add('active');
-        drawCharacterPreviews();
-    });
+    document.getElementById('playBtn').addEventListener('click', beginPlay);
     document.getElementById('titleSitesBtn').addEventListener('click', () => {
         overlays.title.classList.remove('active');
         overlays.sites.classList.add('active');
@@ -1685,20 +1660,11 @@
         option.addEventListener('click', () => setCharacter(option.dataset.character));
     });
 
-    canvas.addEventListener('click', (e) => {
-        if (!notification) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * (GAME_W / rect.width);
-        const y = (e.clientY - rect.top) * (GAME_H / rect.height);
-        if (x >= GAME_W / 2 - 210 && x <= GAME_W / 2 + 210 && y >= notification.y && y <= notification.y + 48) {
-            window.open(notification.link, '_blank', 'noopener,noreferrer');
-            notification = null;
-        }
-    });
+    canvas.addEventListener('pointerdown', () => { if (!anyOverlayOpen()) canvas.focus({ preventScroll: true }); });
 
     function resetRun() {
         clearInput();
-        started = false;
+        started = true;
         banner = null;
         lives = 3;
         coins = 0;
@@ -1706,15 +1672,23 @@
         Object.values(overlays).forEach(el => el.classList.remove('active'));
         loadLevel(0);
         document.getElementById('continueBtn').textContent = 'CONTINUE';
-        overlays.title.classList.add('active');
+        if (linkDialog.open) linkDialog.close();
+        if (enabled && !menuSuspended) canvas.focus({ preventScroll: true });
     }
     window.Platformer = {
         setEnabled(value) {
             enabled = value;
             clearInput();
-            if (!value && started && !anyOverlayOpen()) overlays.pause.classList.add('active');
+            if (value) { resizeCanvas(); if (!anyOverlayOpen() && !menuSuspended) canvas.focus({ preventScroll: true }); }
         },
         setMode(mode) { gameMode = ['classic', 'overclock', 'training'].includes(mode) ? mode : 'classic'; resetRun(); },
+        preview(target) {
+            draw();
+            const w = Math.min(canvas.width, 960), h = Math.min(canvas.height, w / 2);
+            const x = Math.max(0, Math.min(player.x - cameraX - w / 3, canvas.width - w));
+            target.getContext('2d').drawImage(canvas, x, canvas.height - h, w, h, 0, 0, target.width, target.height);
+        },
+        setMenuOpen(value) { menuSuspended = value; clearInput(); if (!value && enabled && !anyOverlayOpen()) canvas.focus({ preventScroll: true }); },
         isPaused: () => overlays.pause.classList.contains('active'),
         restart: resetRun,
         pause() {
@@ -1736,8 +1710,9 @@
         const active = records.map(r => r.target).find(el => el.classList.contains('active'));
         document.getElementById('gameStage').classList.toggle('has-overlay', anyOverlayOpen());
         clearInput();
-        if (active && enabled) active.querySelector('button, a')?.focus({ preventScroll: true });
-        else if (enabled && started && !anyOverlayOpen()) canvas.focus({ preventScroll: true });
+        canvas.tabIndex = anyOverlayOpen() ? -1 : 0;
+        if (active && enabled && !menuSuspended) active.querySelector('button, a')?.focus({ preventScroll: true });
+        else if (enabled && !menuSuspended && started && !anyOverlayOpen()) canvas.focus({ preventScroll: true });
         if (enabled) document.getElementById('pauseGame').textContent = overlays.pause.classList.contains('active') ? 'Resume' : 'Pause';
     });
     Object.values(overlays).forEach(el => {
@@ -1752,7 +1727,9 @@
     window.addEventListener('resize', resizeCanvas);
     if (window.visualViewport) window.visualViewport.addEventListener('resize', resizeCanvas);
     loadLevel(0);
-    started = false;
+    started = true;
+    hasWeapon = gameMode !== 'classic';
+    canvas.focus({ preventScroll: true });
     drawCharacterPreviews();
     loop();
 })();
