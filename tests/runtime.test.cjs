@@ -33,7 +33,7 @@ function runtime() {
         getBoundingClientRect() {return {left: 0, top: 0, width: 1000, height: 500};}
     }
     const drawing = new Proxy({}, {get: (obj,key) => key in obj ? obj[key] : key.startsWith('create') ? () => ({addColorStop() {}}) : () => {}, set: (obj,key,value) => {obj[key] = value; return true;}});
-    for (const match of read('play.html').matchAll(/<([a-z][a-z0-9]*)\b([^>]*)>/g)) {
+    for (const match of read('index.html').matchAll(/<([a-z][a-z0-9]*)\b([^>]*)>/g)) {
         const attrs = Object.fromEntries([...match[2].matchAll(/([\w-]+)="([^"]*)"/g)].map(m => [m[1],m[2]]));
         const element = new Element(match[1], attrs);
         element.hidden = /\bhidden(?:\s|$)/.test(match[2]);
@@ -52,7 +52,7 @@ function runtime() {
     vm.runInContext(read('js/arcade-core.js'), context);
     window.ArcadeCore = context.ArcadeCore;
     // Test-only observation; no debugging hooks ship to visitors.
-    const instrumented = read('js/game.js').replace('    window.Platformer = {', `    window.inspectGame = () => ({lives, gameMode, gameTheme, started, enabled, hasWeapon, x: player.x, skyBot, remainingFrames});
+    const instrumented = read('js/game.js').replace('    window.Platformer = {', `    window.inspectGame = () => ({lives, gameMode, started, enabled, hasWeapon, x: player.x, skyBot, remainingFrames});
     window.stepGame = update;
     window.expireTrace = () => { remainingFrames = 1; };
     window.damageGame = () => { player.invuln = 0; hurtPlayer(0); };
@@ -92,7 +92,7 @@ test('training prevents damage and pit life loss; overclock expires at its time 
     r.window.damageGame(); r.window.testPit();
     assert.equal(r.window.inspectGame().lives, 3);
     assert.equal(r.window.inspectGame().hasWeapon, true);
-    assert.equal(r.window.inspectGame().skyBot, '#081a1c');
+    assert.equal(r.window.inspectGame().skyBot, '#12303b');
     mode.value = 'overclock'; mode.emit('change'); r.ids.get('closeOverlay').click();
     r.window.expireTrace(); r.window.stepGame();
     assert.equal(r.ids.get('overTitle').textContent, 'TRACE COMPLETE');
@@ -118,15 +118,19 @@ test('snake pauses on focus loss and resumes only on request', () => {
     r.advance(3000); assert.match(r.ids.get('miniStatus').textContent, /Paused/);
     r.ids.get('pauseGame').click(); assert.equal(r.timers.size, 1);
 });
-test('corruption is opt-in, cleared by Escape, game changes and page exit', () => {
+test('the homepage has no theme or corruption controls and old preferences are retired', () => {
     const r = runtime();
-    for (const stop of [() => r.document.emit('keydown', {code: 'Escape'}), () => r.choose('snake'), () => r.window.emit('pagehide'), () => r.ids.get('restorePage').click()]) {
-        r.ids.get('corruptToggle').click();
-        assert.equal(r.ids.get('corruptionLayer').hidden, false);
-        assert.ok(r.document.body.classList.contains('is-corrupt'));
-        stop();
-        assert.equal(r.ids.get('corruptionLayer').hidden, true);
-        assert.equal(r.ids.get('corruptToggle').getAttribute('aria-pressed'), 'false');
-        assert.equal(r.timers.size, 0);
-    }
+    assert.equal(r.ids.has('themeSelect'), false);
+    assert.equal(r.ids.has('corruptToggle'), false);
+    assert.equal(r.ids.has('restorePage'), false);
+    assert.equal(r.window.Platformer.setTheme, undefined);
+});
+test('Escape pauses and resumes the platformer even when the Resume button has focus', () => {
+    const r = runtime();
+    r.ids.get('playBtn').click(); r.ids.get('closeOverlay').click();
+    r.document.emit('keydown', {code: 'Escape', target: r.ids.get('gameCanvas')});
+    assert.equal(r.window.Platformer.isPaused(), true);
+    r.ids.get('resumeBtn').focus();
+    r.document.emit('keydown', {code: 'Escape', target: r.ids.get('resumeBtn')});
+    assert.equal(r.window.Platformer.isPaused(), false);
 });

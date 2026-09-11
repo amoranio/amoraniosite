@@ -4,11 +4,8 @@
     const storage = window.amoranStorage;
     let enabled = true;
     let gameMode = 'classic';
-    let gameTheme = 'neon';
     let remainingFrames = 90 * 60;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const backdrop = new Image();
-    backdrop.src = 'assets/cyber-rooftop.jpg';
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -58,13 +55,11 @@
         drone: '#5a5a72',
         droneEye: '#ff4d6d',
         spike: '#3d3d4a',
-        grass: '#1fbf3a',
-        grassDark: '#148028',
-        dirt: '#c84c0c',
-        dirtDark: '#8a3408'
+        grass: '#4fa966',
+        grassDark: '#235136',
+        dirt: '#1c302c',
+        dirtDark: '#0b1c1c'
     };
-
-    const originalColors = { ...COLORS };
 
     const LINKS = [
         { id: 'linkedin', url: 'https://www.linkedin.com/in/ashleymoran', label: 'in', name: 'LinkedIn' },
@@ -157,7 +152,7 @@
     };
 
     let cameraX = 0;
-    let currentCharacter = storage.get('amoran-char') || 'ash';
+    let currentCharacter = storage.get('amoran-char') || 'mario';
     let lives = 3;
     let coins = 0;
     let hasWeapon = false;
@@ -387,8 +382,8 @@
         levelName = def.name;
         worldWidth = def.width;
         flagX = def.flagX;
-        skyTop = def.skyTop;
-        skyBot = def.skyBot;
+        skyTop = ['#03090f', '#050b13', '#030710'][index];
+        skyBot = ['#12303b', '#112c3c', '#162640'][index];
         remainingFrames = 90 * 60;
         pits = def.pits.map((p) => ({ ...p }));
         clouds = def.clouds.map((c) => ({ ...c }));
@@ -438,7 +433,6 @@
         fireCooldown = 0;
         levelLocked = false;
         if (worldChip) worldChip.textContent = def.chip;
-        applyTheme(gameTheme);
     }
 
     function showBanner(text, timer) {
@@ -650,7 +644,7 @@
             lives = 0;
             overlays.over.classList.add('active');
             document.getElementById('overTitle').textContent = 'TRACE COMPLETE';
-            document.getElementById('overSub').textContent = 'The 90-second window closed. Retry this world.';
+            document.getElementById('overSub').textContent = 'Time up. Try this world again.';
             document.getElementById('continueBtn').textContent = 'RETRY WORLD';
             clearInput();
             return;
@@ -668,7 +662,7 @@
             if (player.deadTimer <= 0) {
                 overlays.over.classList.add('active');
                 document.getElementById('overTitle').textContent = 'GAME OVER';
-                document.getElementById('overSub').textContent = 'The crawlers got you. Continue this world?';
+                document.getElementById('overSub').textContent = 'Try this world again?';
             }
             updateParticles();
             return;
@@ -842,7 +836,7 @@
             } else {
                 overlays.over.classList.add('active');
                 document.getElementById('overTitle').textContent = 'YOU WIN';
-                document.getElementById('overSub').textContent = 'Every block is a real door. Open them from the Sites panel.';
+                document.getElementById('overSub').textContent = 'All three worlds complete. Play again or open the links.';
                 document.getElementById('continueBtn').textContent = 'PLAY AGAIN';
                 banner = { text: 'VICTORY', timer: 999, y: 20, win: true };
             }
@@ -888,7 +882,7 @@
 
     function drawCloud(x, y, size) {
         const s = 18 * size;
-        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.fillStyle = 'rgba(117,161,173,0.14)';
         ctx.beginPath();
         ctx.arc(x, y, s, 0, Math.PI * 2);
         ctx.arc(x + s * 1.45, y + 2, s * 1.25, 0, Math.PI * 2);
@@ -896,7 +890,7 @@
         ctx.arc(x + s * 0.7, y - s * 0.45, s * 0.85, 0, Math.PI * 2);
         ctx.arc(x + s * 2.1, y - s * 0.5, s * 0.95, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = 'rgba(210,230,255,0.35)';
+        ctx.fillStyle = 'rgba(126,181,189,0.08)';
         ctx.beginPath();
         ctx.arc(x + s * 1.4, y + 6, s * 0.9, 0, Math.PI * 2);
         ctx.fill();
@@ -904,7 +898,7 @@
 
     function drawHills() {
         const par = cameraX * 0.42;
-        ctx.fillStyle = '#1aa01a';
+        ctx.fillStyle = '#123831';
         for (const hill of hills) {
             const x = hill.x - par;
             if (x + hill.w < -40 || x > GAME_W + 40) continue;
@@ -912,14 +906,14 @@
             ctx.moveTo(x, GAME_H - GROUND_HEIGHT);
             ctx.quadraticCurveTo(x + hill.w / 2, GAME_H - GROUND_HEIGHT - hill.h, x + hill.w, GAME_H - GROUND_HEIGHT);
             ctx.fill();
-            ctx.fillStyle = '#28c428';
+            ctx.fillStyle = '#1b5041';
             ctx.beginPath();
             ctx.moveTo(x + 18, GAME_H - GROUND_HEIGHT);
             ctx.quadraticCurveTo(x + hill.w / 2, GAME_H - GROUND_HEIGHT - hill.h + 18, x + hill.w - 10, GAME_H - GROUND_HEIGHT);
             ctx.fill();
-            ctx.fillStyle = '#1aa01a';
+            ctx.fillStyle = '#123831';
         }
-        ctx.fillStyle = '#21d03a';
+        ctx.fillStyle = '#247352';
         for (const b of bushes) {
             const x = b.x - par;
             if (x < -40 || x > GAME_W + 40) continue;
@@ -1433,29 +1427,23 @@
     }
 
     function drawSky() {
-        if (gameTheme !== 'classic') {
-            ctx.fillStyle = gameTheme === 'anime' ? '#170f29' : '#081a1c';
-            ctx.fillRect(0, 0, GAME_W, GAME_H);
-            if (backdrop.complete && backdrop.naturalWidth) {
-                ctx.globalAlpha = gameTheme === 'anime' ? 0.55 : 0.3;
-                ctx.drawImage(backdrop, 0, 0, GAME_W, GAME_H);
-                ctx.globalAlpha = 1;
-            }
-            ctx.strokeStyle = gameTheme === 'anime' ? '#ce9bf21c' : '#a5ffa21c';
-            ctx.lineWidth = 1;
-            for (let x = -(cameraX * 0.2 % 50); x < GAME_W; x += 50) {
-                ctx.beginPath(); ctx.moveTo(x, 40); ctx.lineTo(x, GAME_H); ctx.stroke();
-            }
-            return;
-        }
         const g = ctx.createLinearGradient(0, 0, 0, GAME_H);
         g.addColorStop(0, skyTop);
         g.addColorStop(1, skyBot);
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, GAME_W, GAME_H);
-        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        // A fixed night sky keeps the original parallax world legible.
+        ctx.fillStyle = '#b9d8de';
+        for (let i = 0; i < 65; i++) {
+            const sx = ((i * 173 + 31 - cameraX * 0.06) % GAME_W + GAME_W) % GAME_W;
+            const sy = 48 + (i * 67 % 230);
+            ctx.globalAlpha = 0.25 + (i % 4) * 0.15;
+            ctx.fillRect(sx, sy, i % 5 === 0 ? 2 : 1, 2);
+        }
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#99bfc833';
         ctx.beginPath();
-        ctx.arc(180 - cameraX * 0.06, 90, 70, 0, Math.PI * 2);
+        ctx.arc(820 - cameraX * 0.06, 104, 44, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = 'rgba(20, 40, 90, 0.22)';
         const mx = -cameraX * 0.15;
@@ -1479,11 +1467,11 @@
         }
         drawSky();
         const cloudPar = cameraX * 0.28;
-        for (const c of gameTheme === 'classic' ? clouds : []) {
+        for (const c of clouds) {
             const x = c.x - cloudPar;
             if (x > -120 && x < GAME_W + 120) drawCloud(x, c.y, c.size);
         }
-        if (gameTheme === 'classic') drawHills();
+        drawHills();
         drawGround();
         for (const b of bricks) drawBrick(b.x, b.y, b.width, b.height);
         for (const m of movers) {
@@ -1546,12 +1534,12 @@
     }
 
     document.addEventListener('keydown', (e) => {
-        if (!enabled || /^(INPUT|SELECT|TEXTAREA|BUTTON|A)$/.test(e.target.tagName)) return;
+        if (!enabled) return;
         if (e.code === 'Escape' && started && !overlays.title.classList.contains('active') && !overlays.character.classList.contains('active') && !overlays.sites.classList.contains('active') && !overlays.over.classList.contains('active')) {
             overlays.pause.classList.toggle('active');
             return;
         }
-        if (anyOverlayOpen() || document.activeElement !== canvas) return;
+        if (/^(INPUT|SELECT|TEXTAREA|BUTTON|A)$/.test(e.target.tagName) || anyOverlayOpen() || document.activeElement !== canvas) return;
         if (bindKey(e.code, true) || ['KeyA', 'KeyD', 'KeyW', 'KeyX', 'KeyF', 'ShiftLeft', 'ShiftRight'].includes(e.code)) e.preventDefault();
     });
     document.addEventListener('keyup', (e) => bindKey(e.code, false));
@@ -1708,20 +1696,6 @@
         }
     });
 
-    function applyTheme(theme) {
-        gameTheme = ['classic', 'anime', 'neon'].includes(theme) ? theme : 'neon';
-        Object.assign(COLORS, originalColors);
-        if (gameTheme !== 'classic') Object.assign(COLORS, {
-            coin: gameTheme === 'anime' ? '#e9adff' : '#bafa82',
-            brick: '#243638', brickDark: '#152629', brickLight: '#618b7b',
-            q: gameTheme === 'anime' ? '#995bd3' : '#509363', qDark: '#233e34', qLight: '#d8ffb3',
-            pipe: '#274a45', pipeDark: '#162b2e', pipeLight: '#63bd8b',
-            grass: gameTheme === 'anime' ? '#bf89e8' : '#8fc88b', grassDark: '#334641',
-            dirt: '#14252c', dirtDark: '#091920', crawler: '#715996', crawlerDark: '#403451', crawlerLight: '#caa4eb'
-        });
-        if (gameTheme !== 'classic') skyBot = gameTheme === 'anime' ? '#170f29' : '#081a1c';
-        else skyBot = LEVELS[levelIndex].skyBot;
-    }
     function resetRun() {
         clearInput();
         started = false;
@@ -1731,7 +1705,6 @@
         hasWeapon = gameMode !== 'classic';
         Object.values(overlays).forEach(el => el.classList.remove('active'));
         loadLevel(0);
-        applyTheme(gameTheme);
         document.getElementById('continueBtn').textContent = 'CONTINUE';
         overlays.title.classList.add('active');
     }
@@ -1742,7 +1715,6 @@
             if (!value && started && !anyOverlayOpen()) overlays.pause.classList.add('active');
         },
         setMode(mode) { gameMode = ['classic', 'overclock', 'training'].includes(mode) ? mode : 'classic'; resetRun(); },
-        setTheme: applyTheme,
         isPaused: () => overlays.pause.classList.contains('active'),
         restart: resetRun,
         pause() {
@@ -1759,9 +1731,10 @@
     window.addEventListener('blur', () => window.Platformer.pause());
     document.addEventListener('visibilitychange', () => { if (document.hidden) window.Platformer.pause(); });
     // These panels are inline game screens, not page-blocking modals. Keep the
-    // global game selector and restore control reachable while moving focus.
+    // global game selector and playback controls reachable while moving focus.
     const panelObserver = new MutationObserver(records => {
         const active = records.map(r => r.target).find(el => el.classList.contains('active'));
+        document.getElementById('gameStage').classList.toggle('has-overlay', anyOverlayOpen());
         clearInput();
         if (active && enabled) active.querySelector('button, a')?.focus({ preventScroll: true });
         else if (enabled && started && !anyOverlayOpen()) canvas.focus({ preventScroll: true });
@@ -1779,7 +1752,6 @@
     window.addEventListener('resize', resizeCanvas);
     if (window.visualViewport) window.visualViewport.addEventListener('resize', resizeCanvas);
     loadLevel(0);
-    applyTheme(gameTheme);
     started = false;
     drawCharacterPreviews();
     loop();

@@ -11,19 +11,18 @@
     let paused = false;
     let snakeTimer = null;
     const memoryTimers = new Set();
-    let corruptionTimer = null;
     const pads = [];
     const canvas = $('snakeCanvas');
     const ctx = canvas.getContext('2d');
     const descriptions = {
-        platformer: {classic: 'Three lives. Explore all three worlds and unlock the links.', overclock: '90 seconds per world. Faster runners and bots. Start with the pulse weapon.', training: 'No damage or life loss. Start armed and explore at your own pace.'},
+        platformer: {classic: 'Three lives. Three worlds. Collect coins and reach the flag.', overclock: '90 seconds per world. Faster runners and bots. Start with the pulse weapon.', training: 'No damage or life loss. Start armed and explore at your own pace.'},
         snake: {classic: 'Collect packets, grow your trace, and avoid walls and your tail.', overclock: 'Faster packets. The route gets quicker as your score grows.', training: 'A slower pace. Wrap through walls; your own trace still ends the run.'},
         memory: {classic: 'Watch the sequence, then repeat it. Each round adds one more node.', overclock: 'Shorter signals. The same growing sequence, with less time to memorise it.', training: 'Slower signals. A missed node replays the same sequence for another try.'}
     };
     const notes = {
-        platformer: 'Collect the pulse star to fire. Every question block leads to a real project or profile.',
+        platformer: 'Collect the pulse star to fire. Hit question blocks to discover links.',
         snake: 'Arrow keys or WASD to steer. Touch the direction buttons on mobile. Each packet adds 10 points.',
-        memory: 'Watch the numbered nodes light up, then repeat their order. Click, tap, or press 1–9. This is a memory game, not a real AI attack.'
+        memory: 'Watch the numbered nodes, then repeat their order. Click, tap, or press 1–9.'
     };
     const titles = {platformer: 'BLOCK RUNNER', snake: 'PACKET SNAKE', memory: 'NEURAL BREACH'};
     const bestKey = () => `amoran-best-${selected}-${mode}`;
@@ -46,7 +45,7 @@
     }
     function lockPads(locked) { pads.forEach(p => { p.disabled = locked; }); }
     function drawSnake() {
-        const accent = document.body.dataset.theme === 'anime' ? '#dcafff' : document.body.dataset.theme === 'classic' ? '#ffd24a' : '#c3f87c';
+        const accent = '#8ef5ac';
         ctx.fillStyle = '#091015';
         ctx.fillRect(0, 0, 600, 400);
         ctx.strokeStyle = '#1d2c2c'; ctx.lineWidth = 1;
@@ -59,9 +58,9 @@
         });
         ctx.globalAlpha = 1;
         if (snake.food) {
-            ctx.fillStyle = '#e3a2ff';
+            ctx.fillStyle = '#8ef5ac';
             ctx.fillRect(snake.food.x * 20 + 4, snake.food.y * 20 + 4, 12, 12);
-            ctx.strokeStyle = '#e3a2ff';
+            ctx.strokeStyle = '#8ef5ac';
             ctx.strokeRect(snake.food.x * 20 + 1, snake.food.y * 20 + 1, 18, 18);
         }
     }
@@ -71,7 +70,7 @@
         clearTimers();
         lockPads(true);
         $('miniStatus').textContent = message;
-        $('miniStart').textContent = 'Play again →';
+        $('miniStart').textContent = 'Play again';
         $('miniStart').hidden = false;
         $('pauseGame').textContent = 'Pause';
         $('miniStart').focus({preventScroll: true});
@@ -141,8 +140,8 @@
         memory = core.createMemory(mode);
         lockPads(true);
         $('miniStart').hidden = false;
-        $('miniStart').textContent = 'Start run →';
-        $('miniStatus').textContent = selected === 'snake' ? 'Route the packets. Don’t cross your own trace.' : 'Watch the nodes. Repeat the sequence. Breach the next layer.';
+        $('miniStart').textContent = 'Start game';
+        $('miniStatus').textContent = selected === 'snake' ? 'Collect packets. Avoid the walls and your tail.' : 'Watch the numbers, then repeat the sequence.';
         $('pauseGame').textContent = 'Pause';
         score(0);
         drawSnake();
@@ -152,7 +151,7 @@
         running = true;
         $('miniStart').hidden = true;
         if (selected === 'snake') {
-            $('miniStatus').textContent = 'Route active · Collect the violet packets.';
+            $('miniStatus').textContent = 'Collect the green packets.';
             canvas.focus({preventScroll: true});
             snakeTimer = setTimeout(snakeStep, core.snakeDelay(mode, 0));
         } else nextRound();
@@ -164,14 +163,14 @@
         $('pauseGame').textContent = paused ? 'Resume' : 'Pause';
         if (paused) { lockPads(true); $('miniStatus').textContent = 'Paused · Resume when you’re ready.'; }
         else if (selected === 'snake') {
-            $('miniStatus').textContent = 'Route active · Collect the violet packets.';
+            $('miniStatus').textContent = 'Collect the green packets.';
             canvas.focus({preventScroll: true});
             snakeTimer = setTimeout(snakeStep, core.snakeDelay(mode, snake.score));
         } else if (memory.phase === 'complete') nextRound();
         else replayMemory();
     }
     function describe() {
-        $('modeDescription').textContent = `${mode[0].toUpperCase() + mode.slice(1)} · ${descriptions[selected][mode]}`;
+        $('modeDescription').textContent = descriptions[selected][mode];
         $('fieldNote').textContent = notes[selected];
     }
     function chooseGame(game) {
@@ -190,7 +189,6 @@
         resetMini();
         if (game === 'platformer') $('pauseGame').textContent = window.Platformer.isPaused() ? 'Resume' : 'Pause';
         describe();
-        restoreCorruption();
     }
     document.querySelectorAll('[data-game]').forEach(button => button.addEventListener('click', () => chooseGame(button.dataset.game)));
     $('modeSelect').addEventListener('change', e => {
@@ -199,17 +197,7 @@
         resetMini();
         describe();
     });
-    function setTheme(theme) {
-        if (!['neon', 'anime', 'classic'].includes(theme)) theme = 'neon';
-        document.body.dataset.theme = theme;
-        $('themeSelect').value = theme;
-        window.Platformer.setTheme(theme);
-        storage.set('amoran-theme', theme);
-        drawSnake();
-    }
-    $('themeSelect').addEventListener('change', e => setTheme(e.target.value));
     $('restartGame').addEventListener('click', () => {
-        restoreCorruption();
         if (selected === 'platformer') window.Platformer.restart();
         else resetMini();
     });
@@ -221,7 +209,6 @@
     const directions = {ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right'};
     document.addEventListener('keydown', e => {
         if (e.code === 'Escape') {
-            restoreCorruption();
             if (selected !== 'platformer') pauseMini();
             return;
         }
@@ -231,33 +218,9 @@
         }
         if (selected === 'memory' && /^Digit[1-9]$/.test(e.code) && !e.repeat) { e.preventDefault(); choosePad(Number(e.code.slice(-1)) - 1); }
     });
-    function restoreCorruption() {
-        clearTimeout(corruptionTimer);
-        const restoreFocused = document.activeElement === $('restorePage');
-        document.body.classList.remove('is-corrupt');
-        $('corruptionLayer').hidden = true;
-        $('restorePage').hidden = true;
-        $('corruptToggle').setAttribute('aria-pressed', 'false');
-        $('corruptToggle').textContent = 'Corrupt: OFF';
-        if (restoreFocused) $('corruptToggle').focus({preventScroll: true});
-    }
-    $('corruptToggle').addEventListener('click', () => {
-        if (!$('corruptionLayer').hidden) { restoreCorruption(); return; }
-        document.body.classList.add('is-corrupt');
-        $('corruptionLayer').hidden = false;
-        $('restorePage').hidden = false;
-        $('corruptToggle').setAttribute('aria-pressed', 'true');
-        $('corruptToggle').textContent = 'Corrupt: ON';
-        $('corruptionLog').textContent = '> sandbox boundary: decorative\n> rendering rogue pixels…\n> reality: unaffected_';
-        corruptionTimer = setTimeout(() => {
-            $('corruptionLog').textContent = '> containment: artistically compromised\n> rogue pixels entered the page\n> restore available / ESC_';
-        }, 3500);
-    });
-    $('restorePage').addEventListener('click', restoreCorruption);
-    function suspend() { clearTimers(); if (selected !== 'platformer') pauseMini(true); window.Platformer.pause(); restoreCorruption(); }
+    function suspend() { clearTimers(); if (selected !== 'platformer') pauseMini(true); window.Platformer.pause(); }
     window.addEventListener('blur', suspend);
     window.addEventListener('pagehide', suspend);
     document.addEventListener('visibilitychange', () => { if (document.hidden) suspend(); });
-    setTheme(storage.get('amoran-theme') || 'neon');
     drawSnake();
 })();

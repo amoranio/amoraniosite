@@ -8,12 +8,7 @@
     };
     window.amoranStorage = storage;
     document.querySelectorAll('[data-year]').forEach(el => { el.textContent = new Date().getFullYear(); });
-    if (document.body.dataset.page === 'chooser') {
-        const persona = storage.get('amoran-persona');
-        if (!new URLSearchParams(location.search).has('choose') && ['professional', 'play'].includes(persona)) location.replace(persona + '.html');
-        document.querySelectorAll('[data-persona]').forEach(link => link.addEventListener('click', () => {
-            if (document.getElementById('rememberPersona').checked) storage.set('amoran-persona', link.dataset.persona);
-            else storage.remove('amoran-persona');
-        }));
-    }
+    // Retire preferences from the previous site without affecting scores or sound.
+    storage.remove('amoran-persona');
+    storage.remove('amoran-theme');
 })();
