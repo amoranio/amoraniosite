@@ -1,30 +1,32 @@
 # amoran.io
 
-Ashley Moran's portfolio and cyber arcade. A plain HTML/CSS/JavaScript site, with no runtime dependencies or build step. GitHub Pages deploys `main` to the existing domain.
+Ashley Moran's site: three browser games and links to projects and profiles. Plain HTML, CSS, and JavaScript, with no build step or runtime dependencies. GitHub Pages deploys `main` to the existing domain.
 
-## The two personas
+## Site
 
-- `index.html`: first-visit persona chooser. Visitors can remember a choice on this device. `index.html?choose` always opens the chooser; both personas include a switch link. Direct links to either persona also work.
-- `professional.html`: dark professional portfolio. Replace the marked biography, roles, dates, achievements, certifications, and project descriptions with your own details. The Security Architect title is based on the public [LinkedIn profile](https://www.linkedin.com/in/ashleymoran/); employers, dates, and credentials have intentionally not been inferred.
-- `play.html`: cyber arcade, with all six existing profile/project links available without playing.
+`index.html` opens directly on the arcade. The design uses black surfaces, strong white type, outlined controls, and restrained green accents, taking visual cues from [SpaceX](https://www.spacex.com/). The platformer retains its original pixel characters, colourful blocks and pipes, hills, clouds, terrain, and three worlds, now with a night sky.
 
-## Arcade
+There is one fixed visual theme: Neon terminal. There is no persona chooser, professional portfolio, anime artwork, theme selector, or corruption effect. Old `play.html` and `professional.html` bookmarks redirect to the homepage, including without JavaScript. Previously saved persona and theme choices are discarded without changing scores, character selection, or sound preferences.
+
+LinkedIn, X, GitHub, Exnoscan, ClearQR, and badMCP are available from the Links section and the in-game links panel. The original `extensions/support.txt`, `quickGroup/privacy.txt`, custom domain, and Pages deployment are unchanged.
+
+## Games
+
+The difficulty selector changes gameplay, not the site's visual theme.
 
 | Game | Classic | Overclock | Training |
 | --- | --- | --- | --- |
-| Block Runner | Original three worlds, characters, enemies, pickups, and three lives | 90 seconds per world, faster movement and enemies, pulse weapon at start | No damage or life loss; starts with the pulse weapon |
-| Packet Snake | Collect packets, avoid walls and your tail | Faster initial pace and acceleration | Slower pace and wrapping walls; tail collisions still end the run |
-| Neural Breach | Repeat a growing sequence of numbered nodes | Shorter demonstration signals | Slower signals, mistakes replay the same sequence |
+| Block Runner | Original three worlds, characters, enemies, pickups, and three lives | 90 seconds per world, faster movement and enemies, starts armed | No damage or life loss; starts armed |
+| Packet Snake | Collect packets; avoid walls and your tail | Faster pace and acceleration | Slower pace and wrapping walls; tail collisions still end the run |
+| Neural Breach | Repeat a growing sequence of numbered nodes | Shorter demonstration signals | Slower signals; mistakes replay the same sequence |
 
-Themes: Neon terminal, Anime dusk, and Original world. Original world restores the platformer's original palette and scenery. Theme and per-game/per-mode best scores are saved locally, when browser storage is available.
+- Block Runner: WASD/arrows to move, Space/W/Up to jump, F/X/Shift to fire after collecting the pulse star. Keyboard gameplay requires focus on the canvas. Touch controls are included.
+- Packet Snake: arrows/WASD or directional touch buttons.
+- Neural Breach: click/tap the pads or press 1–9.
+- Pause/Resume, Escape, and Restart are available. Games pause when the tab loses focus. A resumed memory game replays its sequence. Changing difficulty starts a fresh run. Switching away from the platformer pauses it; switching mini-games resets them.
+- Best scores are stored on this device per mini-game and difficulty when browser storage is available. Discovered links open only on a deliberate click.
 
-Corrupt is an opt-in visual simulation: page-level terminal fragments, escaped packets, and colour offsets. It never sends commands or reads visitor data. Escape, Restore page, restarting, switching games, hiding the tab, or leaving the page clears it. It is never remembered. Decorative motion respects `prefers-reduced-motion` and avoids rapid flashing. Normal games still need animation to function.
-
-The platformer keeps its existing WASD/arrow/Space/fire/touch controls. Focus its canvas to use gameplay keys. Links discovered in blocks require a deliberate click; the Uplinks section and Sites panel always offer regular accessible links. Snake supports keyboard and directional touch buttons. Neural Breach supports clicks, taps, and keys 1–9. Pause/Resume and Restart are available above every game. Changing a mode starts a fresh run; switching away from the platformer pauses it, while switching mini-games resets them. Games pause when the tab loses focus. A resumed memory game replays its current sequence.
-
-## Development and validation
-
-From this directory:
+## Development
 
 ```sh
 python3 -m http.server 4173 --bind 127.0.0.1
@@ -35,16 +37,8 @@ node --check js/arcade-core.js
 node --check js/site.js
 ```
 
-Open `http://127.0.0.1:4173/`. No install is required. Tests cover game rules, the game lifecycle using an event/canvas harness, persona routing and storage failure, preservation of existing links, and local asset references. These are automated logic/static checks, not a visual browser test.
+Open `http://127.0.0.1:4173/`. No install is required.
 
-`js/arcade-core.js` contains testable, DOM-independent mini-game rules; `js/arcade.js` manages the arcade UI and timers. `js/game.js` retains the original platformer with a small lifecycle/theme/mode API. `css/site.css` styles the chooser and portfolio; `css/arcade.css` extends the original game styles.
+`js/game.js` contains the original platformer and its lifecycle/difficulty API. `js/arcade-core.js` contains DOM-independent mini-game rules. `js/arcade.js` handles game selection, input, timers, and scoring. `css/arcade.css` is the single stylesheet.
 
-## Existing links
-
-LinkedIn, X, GitHub, Exnoscan, ClearQR, and badMCP are retained in both personas. Existing `extensions/support.txt`, `quickGroup/privacy.txt`, `CNAME`, and Pages deployment remain intact.
-
-## Artwork
-
-`assets/cyber-rooftop.jpg` is original artwork generated with the built-in image generation tool, then encoded as JPEG for the web. It is used on the chooser, arcade sidebar, and cyber platformer backdrop. No existing anime character is depicted.
-
-Prompt: One original cyberpunk anime illustration for Ashley Moran's Play persona on amoran.io. A single androgynous adult anime hacker in a dark technical jacket, three-quarter profile, on a rooftop overlooking a dense nocturnal futuristic city. Cinematic late-1990s anime cel-and-painted-background aesthetic, expressive linework, restrained hand-painted texture, detailed but calm. Landscape 1536×1024, character on the right, darker negative space on the left, room for portrait crops. Atmospheric rain, nearly-black navy shadows, restrained acid-green and cyan light, subtle violet highlights and distant wet reflections. No existing anime characters, typography, readable signs, logos, or watermark.
+Tests cover game rules, difficulty behavior, input isolation, timer cleanup, preference migration and storage failures, legacy redirects, link preservation, HTML structure, and asset references. The lifecycle tests use an event/canvas harness, not a visual browser test. GitHub runs these checks on pull requests.

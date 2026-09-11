@@ -7,11 +7,11 @@ const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 const urls = ['https://www.linkedin.com/in/ashleymoran', 'https://x.com/amoranio', 'https://github.com/amoranio', 'https://exnoscan.com', 'https://clearqr.exnoscan.com', 'https://amoranio.github.io/badMCP'];
 
-test('both personas retain every existing link', () => {
-    for (const file of ['professional.html', 'play.html']) for (const url of urls) assert.ok(read(file).includes(`href="${url}"`), `${file}: ${url}`);
+test('the arcade homepage retains every existing link', () => {
+    for (const file of ['index.html']) for (const url of urls) assert.ok(read(file).includes(`href="${url}"`), `${file}: ${url}`);
 });
 test('all local HTML and CSS asset references exist, with no duplicate IDs', () => {
-    for (const file of ['index.html', 'professional.html', 'play.html', 'css/site.css', 'css/style.css', 'css/arcade.css']) {
+    for (const file of ['index.html', 'professional.html', 'play.html', 'css/arcade.css']) {
         const content = read(file).replace(/url\("data:[^"]*"\)/g, '');
         const ids = [...content.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
         assert.equal(ids.length, new Set(ids).size, `Duplicate ID in ${file}`);
@@ -23,29 +23,27 @@ test('all local HTML and CSS asset references exist, with no duplicate IDs', () 
         }
     }
 });
-function personaContext(saved, search = '', blocked = false) {
-    let redirect;
-    const listeners = [];
-    const checkbox = {checked: true};
-    const store = new Map(saved ? [['amoran-persona', saved]] : []);
-    const storage = {getItem: k => {if (blocked) throw Error('disabled'); return store.get(k);}, setItem: (k,v) => {if (blocked) throw Error('disabled'); store.set(k,v);}, removeItem: k => {if (blocked) throw Error('disabled'); store.delete(k);}};
-    const context = {window: {}, URLSearchParams, location: {search, replace: value => {redirect = value;}}, localStorage: storage, document: {body: {dataset: {page: 'chooser'}}, getElementById: () => checkbox, querySelectorAll: selector => selector === '[data-persona]' ? [{dataset: {persona: 'play'}, addEventListener: (_, callback) => listeners.push(callback)}] : []}};
-    vm.runInNewContext(read('js/site.js'), context);
-    return {get redirect() {return redirect;}, listeners, checkbox, store};
-}
-test('first visit offers a choice, remembered persona routes only to valid local pages', () => {
-    assert.equal(personaContext().redirect, undefined);
-    assert.equal(personaContext('play').redirect, 'play.html');
-    assert.equal(personaContext('professional').redirect, 'professional.html');
-    assert.equal(personaContext('https://evil.example').redirect, undefined);
-    assert.equal(personaContext('play', '?choose').redirect, undefined);
+test('old preference values cannot redirect the homepage and optional storage may be blocked', () => {
+    for (const blocked of [false, true]) {
+        const values = new Map([['amoran-persona', 'professional'], ['amoran-theme', 'anime'], ['amoran-best-snake-classic', '80']]);
+        const context = { window: {}, location: { replace() { assert.fail('Homepage must not redirect'); } }, localStorage: {
+            getItem(key) { if (blocked) throw Error('blocked'); return values.get(key); },
+            setItem(key, value) { if (blocked) throw Error('blocked'); values.set(key, value); },
+            removeItem(key) { if (blocked) throw Error('blocked'); values.delete(key); }
+        }, document: { querySelectorAll: () => [] } };
+        vm.runInNewContext(read('js/site.js'), context);
+        assert.equal(context.window.amoranStorage.get('amoran-best-snake-classic'), blocked ? null : '80');
+        assert.doesNotThrow(() => context.window.amoranStorage.set('amoran-mute', '1'));
+        if (!blocked) { assert.equal(values.has('amoran-persona'), false); assert.equal(values.has('amoran-theme'), false); }
+    }
 });
-test('remember can be enabled, disabled, or unavailable without breaking navigation', () => {
-    const c = personaContext();
-    c.listeners[0](); assert.equal(c.store.get('amoran-persona'), 'play');
-    c.checkbox.checked = false;
-    c.listeners[0](); assert.equal(c.store.has('amoran-persona'), false);
-    assert.doesNotThrow(() => personaContext('play', '', true).listeners[0]());
+test('old page bookmarks lead to the single homepage', () => {
+    for (const file of ['professional.html', 'play.html']) {
+        assert.ok(read(file).includes('content="0; url=index.html"'));
+        assert.ok(read(file).includes('href="index.html"'));
+    }
+    assert.ok(read('index.html').includes('id="gameCanvas"'));
+    assert.ok(!read('index.html').includes('http-equiv="refresh"'));
 });
 
 test('HTML tag structure is balanced and interactive elements are not nested', () => {
