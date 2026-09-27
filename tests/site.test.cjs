@@ -11,7 +11,7 @@ test('the arcade homepage retains every existing link', () => {
     for (const file of ['index.html']) for (const url of urls) assert.ok(read(file).includes(`href="${url}"`), `${file}: ${url}`);
 });
 test('all local HTML and CSS asset references exist, with no duplicate IDs', () => {
-    for (const file of ['index.html', 'professional.html', 'play.html', 'css/arcade.css']) {
+    for (const file of ['index.html', 'professional.html', 'play.html', 'css/arcade.css', 'css/ide.css']) {
         const content = read(file).replace(/url\("data:[^"]*"\)/g, '');
         const ids = [...content.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
         assert.equal(ids.length, new Set(ids).size, `Duplicate ID in ${file}`);

@@ -3,178 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>amoran.io — Arcade</title>
-    <meta name="description" content="Ashley Moran's site. Block Runner, Packet Snake, Neural Breach, and links to my projects.">
+    <title>Block Runner — amoran.io</title>
+    <meta name="description" content="Ashley Moran's workspace. Editor tabs for about, work, skills, and links, plus Block Runner.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/arcade.css">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2312121c'/%3E%3Crect x='3' y='3' width='10' height='10' fill='%23ffd24a'/%3E%3Crect x='5' y='5' width='6' height='6' fill='%23049cd8'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="css/ide.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231e1e1e'/%3E%3Cpath d='M3 4l4 4-4 4' fill='none' stroke='%234EC9B0' stroke-width='1.4'/%3E%3Cpath d='M8 12h5' stroke='%23DCDCAA' stroke-width='1.4'/%3E%3C/svg%3E">
+    <script>if(!window.matchMedia("(min-width: 1100px) and (min-height: 640px)").matches)document.documentElement.dataset.sidebar="closed";</script>
 </head>
 <body>
-    <a class="skip-link" href="#arcade">Skip to arcade</a>
-    <main id="arcade" class="arcade-viewport">
-    <a class="wordmark" href="index.html" aria-label="amoran.io home">AMORAN<span>.IO</span></a>
-    <button type="button" id="portalTrigger" class="portal-trigger" aria-haspopup="dialog" aria-controls="gamePortal" aria-expanded="false" aria-label="Swap games and open menu (G)"><span class="portal-orbit" aria-hidden="true"><i></i><i></i><i></i></span><span>GAMES <kbd>G</kbd></span></button>
-    <section id="platformerPanel" class="game-panel" aria-label="Block Runner platformer">
-    <div class="stage-shell">
-        <div class="stage-frame">
-            <div class="runner-hud" aria-label="Run status"><span id="worldChip">WORLD 1-1</span><span id="runnerStats">COINS 00 · ♥ 3</span><span id="runnerMode"></span></div>
-            <div class="stage" id="gameStage">
-                <canvas id="gameCanvas" width="1000" height="500" tabindex="0" aria-label="Block Runner game. Arrow keys or WASD to move, Space to jump, F to fire, Escape to pause. Press G for games, controls, and project links.">Your browser does not support canvas. All project links are available in the Games menu.</canvas>
-    <div class="overlay" id="titleOverlay">
-        <div class="overlay-content">
-            <p class="eyebrow">01 / PLATFORMER</p><h2 class="overlay-title">BLOCK RUNNER</h2>
-            <p class="overlay-sub">Three worlds. Collect coins, jump the gaps, and take on the bots.</p>
-            <div class="btn-row">
-                <button class="close-btn" id="playBtn">PLAY</button>
-                <button class="ghost-btn" id="titleSitesBtn">LINKS</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="overlay" id="characterOverlay">
-        <div class="overlay-content">
-            <h2 class="overlay-title">SELECT CHARACTER</h2>
-            <p class="overlay-sub">Choose a character.</p>
-            <div class="character-options" role="group" aria-label="Choose a runner">
-                <button type="button" class="character-option selected" data-character="mario">
-                    <canvas id="previewMario" width="64" height="96"></canvas>
-                    <span class="character-name">M@rio</span>
+    <a class="skip-link" href="#editor">Skip to editor</a>
+    <div class="ide" id="workspace" data-active="block-runner">
+        <header class="titlebar">
+            <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+            <div class="window-title" id="windowTitle">Block Runner — amoran.io</div>
+            <button type="button" class="command-center opens-palette" id="commandCenter" aria-label="Go to file">
+                <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.2" fill="none" stroke="currentColor" stroke-width="1.4"></circle><path d="M10.2 10.2L14 14" stroke="currentColor" stroke-width="1.4"></path></svg>
+                <span>amoran.io</span>
+                <kbd data-mod="1">Ctrl</kbd><kbd>P</kbd>
+            </button>
+            <div class="avatar" title="Ashley Moran">A</div>
+        </header>
+        <div class="workbench">
+            <nav class="activity" aria-label="Activity bar">
+                <button type="button" id="extensionsToggle" aria-label="Extensions" aria-pressed="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.2" height="7.2" rx="1" fill="currentColor"></rect><rect x="13.8" y="3" width="7.2" height="7.2" rx="1" fill="currentColor"></rect><rect x="3" y="13.8" width="7.2" height="7.2" rx="1" fill="currentColor"></rect><rect x="14.6" y="14.6" width="5.6" height="5.6" rx="1" fill="currentColor"></rect></svg>
                 </button>
-                <button type="button" class="character-option" data-character="ash">
-                    <canvas id="previewAsh" width="64" height="96"></canvas>
-                    <span class="character-name">Ash</span>
+                <button type="button" class="opens-palette" id="searchActivity" aria-label="Search files">
+                    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle><path d="M14.8 14.8L20 20" stroke="currentColor" stroke-width="1.6"></path></svg>
                 </button>
-                <button type="button" class="character-option" data-character="maggie">
-                    <canvas id="previewMaggie" width="64" height="96"></canvas>
-                    <span class="character-name">Maggie</span>
+                <button type="button" id="runActivity" aria-label="Open Block Runner">
+                    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"></circle><path fill="currentColor" d="M10.2 8.4l6 3.6-6 3.6z"></path></svg>
                 </button>
-            </div>
-            <label class="mute-row"><input type="checkbox" id="muteCheck"> Mute sound</label>
-            <div class="btn-row">
-                <button class="close-btn" id="closeOverlay">PLAY</button>
+            </nav>
+            <button type="button" class="sidebar-backdrop" id="sidebarBackdrop" aria-label="Close extensions" tabindex="-1"></button>
+            <aside class="sidebar" id="sidebar" aria-label="Extensions">
+                <div class="side-title">EXTENSIONS</div>
+                <div class="ext-search"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.2" fill="none" stroke="currentColor" stroke-width="1.4"></circle><path d="M10.2 10.2L14 14" stroke="currentColor" stroke-width="1.4"></path></svg><span>Search Extensions in Marketplace</span></div>
+                <div class="ext-section">INSTALLED</div>
+                <div class="ext-list" id="extList"></div>
+            </aside>
+            <div class="editor-group" id="editor">
+                <div class="tabs" id="tablist" role="tablist" aria-label="Open editors">
+                    <div class="tab" id="tabwrap-about">
+                        <button type="button" class="tab-main" id="tab-about" data-file="about.json" role="tab" aria-selected="false" tabindex="-1"><span class="mark json" aria-hidden="true"></span><span>about.json</span></button>
+                        <button type="button" class="tab-close" id="close-about" data-close="about.json" aria-label="Close about.json">×</button>
+                    </div>
+                    <div class="tab" id="tabwrap-work">
+                        <button type="button" class="tab-main" id="tab-work" data-file="work.json" role="tab" aria-selected="false" tabindex="-1"><span class="mark json" aria-hidden="true"></span><span>work.json</span></button>
+                        <button type="button" class="tab-close" id="close-work" data-close="work.json" aria-label="Close work.json">×</button>
+                    </div>
+                    <div class="tab" id="tabwrap-skills">
+                        <button type="button" class="tab-main" id="tab-skills" data-file="skills.md" role="tab" aria-selected="false" tabindex="-1"><span class="mark md" aria-hidden="true"></span><span>skills.md</span></button>
+                        <button type="button" class="tab-close" id="close-skills" data-close="skills.md" aria-label="Close skills.md">×</button>
+                    </div>
+                    <div class="tab" id="tabwrap-links">
+                        <button type="button" class="tab-main" id="tab-links" data-file="links.lnk" role="tab" aria-selected="false" tabindex="-1"><span class="mark lnk" aria-hidden="true"></span><span>links.lnk</span></button>
+                        <button type="button" class="tab-close" id="close-links" data-close="links.lnk" aria-label="Close links.lnk">×</button>
+                    </div>
+                    <div class="tab is-active" id="tabwrap-game">
+                        <button type="button" class="tab-main" id="tab-game" data-file="block-runner" role="tab" aria-selected="true"><span class="mark game" aria-hidden="true"></span><span>Block Runner</span><span class="live-dot" title="Running"></span></button>
+                        <button type="button" class="tab-close" id="close-game" data-close="block-runner" aria-label="Close Block Runner">×</button>
+                    </div>
+                </div>
+                <div class="crumbs">
+                    <div id="breadcrumb" aria-label="Breadcrumbs"></div>
+                    <div class="game-tools" id="gameTools">
+                        <label class="mode-label"><span>Difficulty</span>
+                            <select id="modeSelect" aria-label="Difficulty">
+                                <option value="classic">Classic</option>
+                                <option value="overclock">Overclock</option>
+                                <option value="training">Training</option>
+                            </select>
+                        </label>
+                        <button type="button" class="tool-btn" id="pauseGame">Pause</button>
+                        <button type="button" class="tool-btn" id="restartGame">Restart</button>
+                        <button type="button" class="tool-btn" id="settingsBtn">Character</button>
+                        <button type="button" class="tool-btn" id="sitesBtn">Links</button>
+                        <button type="button" class="tool-btn" id="muteBtn" aria-label="Toggle sound"><svg id="muteIcon" viewBox="0 0 24 24" aria-hidden="true"></svg></button>
+                    </div>
+                </div>
+                <div class="editor-body">
+                    <p class="sr-only" id="editorStatus" role="status">Block Runner is open</p>
+                    <div class="empty" id="emptyState" hidden>
+                        <strong>No file open</strong>
+                        <p>Press <kbd data-mod="1">Ctrl</kbd><kbd>P</kbd> to open a file.</p>
+                    </div>
+                    <!-- Buffers are drawn from js/profile.js. Edit that file. -->
+                    <section class="editor-pane" id="panel-about" role="tabpanel" aria-labelledby="tab-about" hidden>
+                        <div class="code-scroll" id="code-about" tabindex="0"><p class="code-fallback">Edit js/profile.js. JavaScript draws this file.</p></div>
+                    </section>
+                    <section class="editor-pane" id="panel-work" role="tabpanel" aria-labelledby="tab-work" hidden>
+                        <div class="code-scroll" id="code-work" tabindex="0"><p class="code-fallback">Edit js/profile.js. JavaScript draws this file.</p></div>
+                    </section>
+                    <section class="editor-pane" id="panel-skills" role="tabpanel" aria-labelledby="tab-skills" hidden>
+                        <div class="code-scroll" id="code-skills" tabindex="0"><p class="code-fallback">Edit js/profile.js. JavaScript draws this file.</p></div>
+                    </section>
+                    <section class="editor-pane" id="panel-links" role="tabpanel" aria-labelledby="tab-links" hidden>
+                        <div class="code-scroll" id="code-links" tabindex="0"><p class="code-fallback">Edit js/profile.js. JavaScript draws this file.</p></div>
+                    </section>
+                    <section class="editor-pane" id="panel-game" role="tabpanel" aria-labelledby="tab-game">
+                        <main id="arcade" class="arcade-viewport">
+                            <section id="platformerPanel" class="game-panel" aria-label="Block Runner platformer">
+                                <div class="stage-shell">
+                                    <div class="stage-frame">
+                                        <div class="runner-hud" aria-label="Run status"><span id="worldChip">WORLD 1-1</span><span id="runnerStats">COINS 00 · ♥ 3</span><span id="runnerMode"></span></div>
+                                        <div class="stage" id="gameStage">
+                                            <canvas id="gameCanvas" width="1000" height="500" tabindex="0" aria-label="Block Runner. Arrow keys or WASD to move, Space to jump, F to fire, Escape to pause.">Your browser does not support canvas.</canvas>
+                                            <div class="overlay" id="titleOverlay">
+                                                <div class="overlay-content">
+                                                    <p class="eyebrow">01 / PLATFORMER</p><h2 class="overlay-title">BLOCK RUNNER</h2>
+                                                    <p class="overlay-sub">Three worlds. Collect coins, jump the gaps, and take on the bots.</p>
+                                                    <div class="btn-row">
+                                                        <button class="close-btn" id="playBtn" type="button">PLAY</button>
+                                                        <button class="ghost-btn" id="titleSitesBtn" type="button">LINKS</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="overlay" id="characterOverlay">
+                                                <div class="overlay-content">
+                                                    <h2 class="overlay-title">SELECT CHARACTER</h2>
+                                                    <p class="overlay-sub">Choose a character.</p>
+                                                    <div class="character-options" role="group" aria-label="Choose a runner">
+                                                        <button type="button" class="character-option selected" data-character="mario">
+                                                            <canvas id="previewMario" width="64" height="96"></canvas>
+                                                            <span class="character-name">M@rio</span>
+                                                        </button>
+                                                        <button type="button" class="character-option" data-character="ash">
+                                                            <canvas id="previewAsh" width="64" height="96"></canvas>
+                                                            <span class="character-name">Ash</span>
+                                                        </button>
+                                                        <button type="button" class="character-option" data-character="maggie">
+                                                            <canvas id="previewMaggie" width="64" height="96"></canvas>
+                                                            <span class="character-name">Maggie</span>
+                                                        </button>
+                                                    </div>
+                                                    <label class="mute-row"><input type="checkbox" id="muteCheck"> Mute sound</label>
+                                                    <div class="btn-row">
+                                                        <button class="close-btn" id="closeOverlay" type="button">PLAY</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="overlay" id="sitesOverlay">
+                                                <div class="overlay-content">
+                                                    <h2 class="overlay-title">LINKS</h2>
+                                                    <p class="overlay-sub">My profiles and projects.</p>
+                                                    <div class="site-grid">
+                                                        <a class="site-card" href="https://www.linkedin.com/in/ashleymoran" target="_blank" rel="noopener noreferrer">
+                                                            <div class="site-name">LinkedIn</div>
+                                                            <div class="site-desc">in / ashleymoran</div>
+                                                        </a>
+                                                        <a class="site-card" href="https://x.com/amoranio" target="_blank" rel="noopener noreferrer">
+                                                            <div class="site-name">X</div>
+                                                            <div class="site-desc">@amoranio</div>
+                                                        </a>
+                                                        <a class="site-card" href="https://github.com/amoranio" target="_blank" rel="noopener noreferrer">
+                                                            <div class="site-name">GitHub</div>
+                                                            <div class="site-desc">code &amp; experiments</div>
+                                                        </a>
+                                                        <a class="site-card" href="https://exnoscan.com" target="_blank" rel="noopener noreferrer">
+                                                            <div class="site-name">Exnoscan</div>
+                                                            <div class="site-desc">product</div>
+                                                        </a>
+                                                        <a class="site-card" href="https://clearqr.exnoscan.com" target="_blank" rel="noopener noreferrer">
+                                                            <div class="site-name">ClearQR</div>
+                                                            <div class="site-desc">QR tools</div>
+                                                        </a>
+                                                        <a class="site-card" href="https://amoranio.github.io/badMCP" target="_blank" rel="noopener noreferrer">
+                                                            <div class="site-name">badMCP</div>
+                                                            <div class="site-desc">MCP playground</div>
+                                                        </a>
+                                                    </div>
+                                                    <div class="btn-row">
+                                                        <button class="close-btn" id="closeSites" type="button">BACK</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="overlay" id="pauseOverlay">
+                                                <div class="overlay-content">
+                                                    <h2 class="overlay-title">PAUSED</h2>
+                                                    <p class="overlay-sub">Resume your game when you’re ready.</p>
+                                                    <div class="btn-row">
+                                                        <button class="close-btn" id="resumeBtn" type="button">RESUME</button>
+                                                        <button class="ghost-btn" id="pauseSitesBtn" type="button">LINKS</button>
+                                                        <button class="ghost-btn" id="pauseCharBtn" type="button">CHARACTER</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="overlay" id="overOverlay">
+                                                <div class="overlay-content">
+                                                    <h2 class="overlay-title" id="overTitle">GAME OVER</h2>
+                                                    <p class="overlay-sub" id="overSub">Try this world again?</p>
+                                                    <div class="btn-row">
+                                                        <button class="close-btn" id="continueBtn" type="button">CONTINUE</button>
+                                                        <button class="ghost-btn" id="overSitesBtn" type="button">LINKS</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mobile-controls">
+                                    <div class="d-pad">
+                                        <button class="control-btn up" id="btnUp" type="button" aria-label="Jump">^</button>
+                                        <button class="control-btn left" id="btnLeft" type="button" aria-label="Left">&lt;</button>
+                                        <button class="control-btn right" id="btnRight" type="button" aria-label="Right">&gt;</button>
+                                    </div>
+                                    <div class="action-buttons">
+                                        <button class="control-btn fire-btn" id="btnFire" type="button" aria-label="Fire">FIRE</button>
+                                        <button class="control-btn jump-btn" id="btnJump" type="button" aria-label="Jump">JUMP</button>
+                                    </div>
+                                </div>
+                            </section>
+                        </main>
+                    </section>
+                </div>
+                <footer class="status">
+                    <div class="status-side">
+                        <span class="status-item" id="statusFile">Block Runner</span>
+                        <span class="status-item" id="statusDetail">Classic</span>
+                    </div>
+                    <div class="status-side right">
+                        <span class="status-item" id="statusPos">Running</span>
+                        <span class="status-item status-quiet">UTF-8</span>
+                        <span class="status-item" id="statusLang">Block Runner</span>
+                    </div>
+                </footer>
             </div>
         </div>
     </div>
-
-    <div class="overlay" id="sitesOverlay">
-        <div class="overlay-content">
-            <h2 class="overlay-title">LINKS</h2>
-            <p class="overlay-sub">My profiles and projects.</p>
-            <div class="site-grid">
-                <a class="site-card" href="https://www.linkedin.com/in/ashleymoran" target="_blank" rel="noopener noreferrer">
-                    <div class="site-name">LinkedIn</div>
-                    <div class="site-desc">in / ashleymoran</div>
-                </a>
-                <a class="site-card" href="https://x.com/amoranio" target="_blank" rel="noopener noreferrer">
-                    <div class="site-name">X</div>
-                    <div class="site-desc">@amoranio</div>
-                </a>
-                <a class="site-card" href="https://github.com/amoranio" target="_blank" rel="noopener noreferrer">
-                    <div class="site-name">GitHub</div>
-                    <div class="site-desc">code &amp; experiments</div>
-                </a>
-                <a class="site-card" href="https://exnoscan.com" target="_blank" rel="noopener noreferrer">
-                    <div class="site-name">Exnoscan</div>
-                    <div class="site-desc">product</div>
-                </a>
-                <a class="site-card" href="https://clearqr.exnoscan.com" target="_blank" rel="noopener noreferrer">
-                    <div class="site-name">ClearQR</div>
-                    <div class="site-desc">QR tools</div>
-                </a>
-                <a class="site-card" href="https://amoranio.github.io/badMCP" target="_blank" rel="noopener noreferrer">
-                    <div class="site-name">badMCP</div>
-                    <div class="site-desc">MCP playground</div>
-                </a>
-            </div>
-            <div class="btn-row">
-                <button class="close-btn" id="closeSites">BACK</button>
-            </div>
-        </div>
+    <div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Go to file" hidden>
+        <input id="paletteInput" type="text" placeholder="Go to file…" aria-label="Go to file" autocomplete="off">
+        <div class="palette-list" id="paletteList" role="listbox"></div>
+        <div class="palette-hint"><span><kbd data-mod="1">Ctrl</kbd><kbd>P</kbd> toggle</span><span>↑↓ select</span><span>enter open</span><span>esc dismiss</span></div>
     </div>
-
-    <div class="overlay" id="pauseOverlay">
-        <div class="overlay-content">
-            <h2 class="overlay-title">PAUSED</h2>
-            <p class="overlay-sub">Resume your game when you’re ready.</p>
-            <div class="btn-row">
-                <button class="close-btn" id="resumeBtn">RESUME</button>
-                <button class="ghost-btn" id="pauseSitesBtn">LINKS</button>
-                <button class="ghost-btn" id="pauseCharBtn">CHARACTER</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="overlay" id="overOverlay">
-        <div class="overlay-content">
-            <h2 class="overlay-title" id="overTitle">GAME OVER</h2>
-            <p class="overlay-sub" id="overSub">Try this world again?</p>
-            <div class="btn-row">
-                <button class="close-btn" id="continueBtn">CONTINUE</button>
-                <button class="ghost-btn" id="overSitesBtn">LINKS</button>
-            </div>
-        </div>
-    </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="mobile-controls">
-        <div class="d-pad">
-            <button class="control-btn up" id="btnUp" aria-label="Jump">^</button>
-            <button class="control-btn left" id="btnLeft" aria-label="Left">&lt;</button>
-            <button class="control-btn right" id="btnRight" aria-label="Right">&gt;</button>
-        </div>
-        <div class="action-buttons">
-            <button class="control-btn fire-btn" id="btnFire" aria-label="Fire">FIRE</button>
-            <button class="control-btn jump-btn" id="btnJump" aria-label="Jump">JUMP</button>
-        </div>
-    </div>
-
-    </section>
-    <section id="miniPanel" class="game-panel mini-panel" aria-labelledby="miniTitle" hidden>
-      <div class="mini-hud"><span id="miniTitle">PACKET SNAKE</span><span id="miniScore">SCORE 0</span><span id="miniBest">BEST 0</span></div>
-      <div id="snakeSurface" class="snake-surface"><canvas id="snakeCanvas" width="600" height="400" tabindex="0" aria-label="Packet Snake. Use arrow keys or WASD to collect green packets and avoid your tail. Escape pauses.">Packet Snake requires a browser with canvas support.</canvas></div>
-      <div id="memorySurface" class="memory-surface" hidden><div id="memoryGrid" class="memory-grid" role="group" aria-label="Neural Breach sequence pads"></div></div>
-      <div class="mini-message"><p id="miniStatus" role="status">Collect packets. Avoid the walls and your tail.</p><button class="button" id="miniStart">Start game</button></div>
-      <div id="snakeControls" class="snake-controls" role="group" aria-label="Packet Snake directional controls"><button data-direction="up" aria-label="Move up">↑</button><button data-direction="left" aria-label="Move left">←</button><button data-direction="down" aria-label="Move down">↓</button><button data-direction="right" aria-label="Move right">→</button></div>
-    </section>
-    </main>
-    <dialog id="gamePortal" class="game-portal" aria-labelledby="portalTitle">
-      <div class="portal-heading"><div><p class="eyebrow">AMORAN.IO / NEON TERMINAL</p><h1 id="portalTitle">PICK YOUR GAME.</h1></div><button type="button" id="closePortal" class="portal-close" aria-label="Close game menu">×</button></div>
-      <div class="game-deck" role="group" aria-label="Choose a game">
-        <button type="button" class="game-card selected" data-game="platformer" aria-pressed="true"><span class="card-number">01 / PLATFORMER</span><canvas class="card-scene" id="runnerPreview" width="480" height="240" aria-hidden="true"></canvas><span class="card-name">BLOCK<br>RUNNER</span><span class="card-action">ENTER WORLD <span aria-hidden="true">↗</span></span></button>
-        <button type="button" class="game-card" data-game="snake" aria-pressed="false"><span class="card-number">02 / SURVIVAL</span><canvas class="card-scene" id="snakePreview" width="480" height="240" aria-hidden="true"></canvas><span class="card-name">PACKET<br>SNAKE</span><span class="card-action">PLAY SNAKE <span aria-hidden="true">↗</span></span></button>
-        <button type="button" class="game-card" data-game="memory" aria-pressed="false"><span class="card-number">03 / MEMORY</span><canvas class="card-scene" id="memoryPreview" width="480" height="240" aria-hidden="true"></canvas><span class="card-name">NEURAL<br>BREACH</span><span class="card-action">PLAY MEMORY <span aria-hidden="true">↗</span></span></button>
-      </div>
-      <div class="portal-settings">
-        <label>Difficulty <select id="modeSelect"><option value="classic">Classic</option><option value="overclock">Overclock</option><option value="training">Training</option></select></label>
-        <button type="button" class="tool-button" id="pauseGame">Pause</button>
-        <button type="button" class="tool-button" id="restartGame">Restart</button>
-        <span id="runnerSettings"><button type="button" class="tool-button" id="settingsBtn">Character</button><button type="button" class="tool-button" id="sitesBtn">World links</button><button type="button" class="tool-button" id="muteBtn" aria-label="Toggle sound"><svg id="muteIcon" viewBox="0 0 24 24" aria-hidden="true"></svg><span>Sound</span></button></span>
-      </div>
-      <p class="mode-description" id="modeDescription">Three lives. Three worlds. Collect coins and reach the flag.</p>
-      <details class="controls-box"><summary>Controls</summary><p id="fieldNote">WASD / arrows to move · Space to jump · F to fire after collecting the pulse star.</p><p>G opens this menu · Escape pauses or goes back. Best scores are saved on this device.</p></details>
-    <details class="portal-links" id="links"><summary>Links <span aria-hidden="true">↗</span></summary>
-
-        <div class="link-grid">
-            <a href="https://exnoscan.com" target="_blank" rel="noopener noreferrer"><span>Exnoscan</span><small>exnoscan.com</small><span aria-hidden="true">↗</span></a>
-            <a href="https://clearqr.exnoscan.com" target="_blank" rel="noopener noreferrer"><span>ClearQR</span><small>clearqr.exnoscan.com</small><span aria-hidden="true">↗</span></a>
-            <a href="https://amoranio.github.io/badMCP" target="_blank" rel="noopener noreferrer"><span>badMCP</span><small>MCP playground</small><span aria-hidden="true">↗</span></a>
-            <a href="https://github.com/amoranio" target="_blank" rel="noopener noreferrer"><span>GitHub</span><small>@amoranio</small><span aria-hidden="true">↗</span></a>
-            <a href="https://x.com/amoranio" target="_blank" rel="noopener noreferrer"><span>X</span><small>@amoranio</small><span aria-hidden="true">↗</span></a>
-            <a href="https://www.linkedin.com/in/ashleymoran" target="_blank" rel="noopener noreferrer"><span>LinkedIn</span><small>Ashley Moran</small><span aria-hidden="true">↗</span></a>
-        </div>
-    </details>
-
-      <p class="portal-footnote">© <span data-year>2026</span> Ashley Moran</p>
-    </dialog>
     <dialog id="linkDialog" class="link-dialog" aria-labelledby="linkTitle">
-      <p class="eyebrow">LINK BLOCK / RUN PAUSED</p><h2 id="linkTitle">LINK</h2><p id="linkAddress"></p>
-      <p class="link-help">Open in a new tab, then return to your run.</p>
-      <div class="btn-row"><a id="discoveredLink" class="close-btn" href="https://amoran.io" target="_blank" rel="noopener noreferrer">OPEN LINK ↗</a><button type="button" id="resumeLink" class="ghost-btn">RESUME GAME</button></div>
+        <p class="eyebrow">LINK BLOCK / RUN PAUSED</p><h2 id="linkTitle">LINK</h2><p id="linkAddress"></p>
+        <p class="link-help">Open in a new tab, then return to your run.</p>
+        <div class="btn-row"><a id="discoveredLink" class="close-btn" href="https://amoran.io" target="_blank" rel="noopener noreferrer">OPEN LINK ↗</a><button type="button" id="resumeLink" class="ghost-btn">RESUME GAME</button></div>
     </dialog>
     <script src="js/site.js"></script>
-    <script src="js/arcade-core.js"></script>
+    <script src="js/profile.js"></script>
     <script src="js/game.js"></script>
     <script src="js/arcade.js"></script>
+    <script src="js/ide.js"></script>
 </body>
 </html>
