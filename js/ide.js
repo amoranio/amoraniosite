@@ -378,8 +378,11 @@
         }
         $('statusPos').textContent = 'Ln ' + (row.dataset.ln || '1') + ', Col ' + col;
     }
+    function sidebarRoomy() {
+        return Boolean(window.matchMedia && window.matchMedia('(min-width: 1100px) and (min-height: 640px)').matches);
+    }
     function sidebarStartsClosed() {
-        return Boolean(window.matchMedia && window.matchMedia('(max-width: 800px), (max-height: 520px)').matches);
+        return !sidebarRoomy();
     }
 
     paint();
@@ -487,6 +490,8 @@
     document.querySelectorAll('[data-mod]').forEach(el => { el.textContent = mac ? '⌘' : 'Ctrl'; });
     const root = document.documentElement;
     if (root && root.dataset && !root.dataset.sidebar) root.dataset.sidebar = sidebarStartsClosed() ? 'closed' : 'open';
+    const roomy = window.matchMedia && window.matchMedia('(min-width: 1100px) and (min-height: 640px)');
+    if (roomy && roomy.addEventListener) roomy.addEventListener('change', event => setSidebar(event.matches));
     const hashed = hashFile();
     if (hashed) active = hashed;
     sync({ history: 'replace' });

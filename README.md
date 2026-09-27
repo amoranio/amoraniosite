@@ -14,7 +14,7 @@ The other tabs are files, each in its own format, drawn with editor colours. `ab
 
 Old `play.html` and `professional.html` bookmarks redirect to the homepage, including without JavaScript. Previously saved persona and theme choices are discarded without changing scores, character selection, or sound preferences.
 
-`Ctrl`+`P` (or `⌘`+`P`) opens Go to File. `Ctrl`+`1` through `Ctrl`+`5` jump to a file. `Ctrl`+`Tab` cycles the open tabs. On a narrow screen the Extensions sidebar starts closed; the activity bar brings it back.
+`Ctrl`+`P` (or `⌘`+`P`) opens Go to File. `Ctrl`+`1` through `Ctrl`+`5` jump to a file. `Ctrl`+`Tab` cycles the open tabs. Extensions docks beside the editor on a wide, tall window. On a phone, a short window, or a tablet it starts closed and opens over the editor, and it follows that rule if the window is resized. The tab strip scrolls, and the game controls wrap instead of spilling off the screen.
 
 LinkedIn, X, GitHub, Exnoscan, ClearQR, and badMCP are in the work and links buffers and in Block Runner's links panel. The original `extensions/support.txt`, `quickGroup/privacy.txt`, custom domain, and Pages deployment are unchanged.
 
