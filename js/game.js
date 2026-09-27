@@ -1681,6 +1681,7 @@
             clearInput();
             if (value) { resizeCanvas(); if (!anyOverlayOpen() && !menuSuspended) canvas.focus({ preventScroll: true }); }
         },
+        resize() { resizeCanvas(); },
         setMode(mode) { gameMode = ['classic', 'overclock', 'training'].includes(mode) ? mode : 'classic'; resetRun(); },
         preview(target) {
             draw();

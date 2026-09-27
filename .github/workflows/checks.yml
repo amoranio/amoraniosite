@@ -19,8 +19,9 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check js/site.js
+          node --check js/profile.js
           node --check js/game.js
-          node --check js/arcade-core.js
           node --check js/arcade.js
+          node --check js/ide.js
       - name: Test game rules, lifecycle, routes, and assets
         run: node --test tests/*.test.cjs

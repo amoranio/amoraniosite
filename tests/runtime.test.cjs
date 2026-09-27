@@ -54,8 +54,7 @@ function runtime({width = 1000, height = 500, popupThrows = false} = {}) {
     const values = new Map();
     const context = vm.createContext({window, document, console, URL, URLSearchParams, location: {search: ''}, localStorage: {getItem: k => values.get(k) || null, setItem: (k,v) => values.set(k,v), removeItem: k => values.delete(k)}, Image: class {complete = false;}, MutationObserver: class {observe() {}}, requestAnimationFrame() {}, setTimeout: (callback, delay) => {const id = ++timerId; timers.set(id, {callback, at: clock + delay}); return id;}, clearTimeout: id => timers.delete(id)});
     vm.runInContext(read('js/site.js'), context);
-    vm.runInContext(read('js/arcade-core.js'), context);
-    window.ArcadeCore = context.ArcadeCore;
+    vm.runInContext(read('js/profile.js'), context);
     // Test-only observation; no debugging hooks ship to visitors.
     const instrumented = read('js/game.js').replace('    window.Platformer = {', `    window.inspectGame = () => ({lives, gameMode, started, enabled, hasWeapon, x: player.x, y: player.y, skyBot, remainingFrames, coins, menuSuspended, cameraX});
     window.drawGame = draw;
@@ -66,7 +65,8 @@ function runtime({width = 1000, height = 500, popupThrows = false} = {}) {
     window.testPit = () => { pits = [{x: 0, w: 1000}]; player.y = 550; update(); };
     window.Platformer = {`);
     vm.runInContext(instrumented, context);
-    vm.runInContext(read('js/arcade.js').replace('    drawSnake();\n})();', '    window.inspectMini = () => ({selected, running, paused, headX: snake.snake[0].x, headY: snake.snake[0].y, round: memory.round, sequence: [...memory.sequence]});\n    drawSnake();\n})();'), context);
+    vm.runInContext(read('js/arcade.js'), context);
+    vm.runInContext(read('js/ide.js'), context);
     const advance = ms => {
         const end = clock + ms;
         let bound = 0;
@@ -78,18 +78,31 @@ function runtime({width = 1000, height = 500, popupThrows = false} = {}) {
         }
         clock = end;
     };
-    return {window, document, ids, elements, advance, timers, opened, resize: (width, height) => { viewport = {left: 0, top: 0, width, height, right: width, bottom: height}; window.emit('resize'); }, choose: game => elements.find(e => e.dataset.game === game).click()};
+    return {window, document, ids, elements, advance, timers, opened, resize: (width, height) => { viewport = {left: 0, top: 0, width, height, right: width, bottom: height}; window.emit('resize'); }};
 }
-test('all game controls initialize, and inactive platformer ignores keyboard input', () => {
+test('editor tabs swap in place and leave the run where it was', () => {
     const r = runtime();
-    r.ids.get('playBtn').click(); r.ids.get('closeOverlay').click();
-    assert.equal(r.window.inspectGame().started, true);
+    r.document.emit('keydown', {code: 'ArrowRight', target: r.ids.get('gameCanvas')});
+    r.window.stepGame();
     const x = r.window.inspectGame().x;
-    r.choose('snake');
-    r.document.emit('keydown', {code: 'ArrowRight'});
+    assert.equal(r.ids.get('panel-game').hidden, false);
+    r.ids.get('tab-about').click();
+    assert.equal(r.ids.get('panel-about').hidden, false);
+    assert.equal(r.ids.get('panel-game').hidden, true);
+    assert.equal(r.window.inspectGame().enabled, false);
     r.window.stepGame();
     assert.equal(r.window.inspectGame().x, x);
-    assert.equal(r.window.inspectGame().enabled, false);
+    assert.match(r.ids.get('code-about').innerHTML, /Person/);
+    assert.match(r.ids.get('code-about').innerHTML, /EDIT/);
+    assert.match(r.ids.get('code-social').innerHTML, /https:\/\/x\.com\/amoranio/);
+    assert.match(r.ids.get('code-work').innerHTML, /https:\/\/exnoscan\.com/);
+    r.ids.get('close-about').click();
+    assert.equal(r.ids.get('tabwrap-about').hidden, true);
+    r.ids.get('file-about').click();
+    assert.equal(r.ids.get('panel-about').hidden, false);
+    r.ids.get('tab-game').click();
+    assert.equal(r.window.inspectGame().enabled, true);
+    assert.equal(r.window.inspectGame().x, x);
 });
 test('training prevents damage and pit life loss; overclock expires at its time limit', () => {
     const r = runtime();
@@ -106,26 +119,15 @@ test('training prevents damage and pit life loss; overclock expires at its time 
     r.ids.get('continueBtn').click();
     assert.equal(r.window.inspectGame().remainingFrames, 5400);
 });
-test('switching games cancels memory callbacks and preserves the current sequence', () => {
-    const r = runtime(); r.choose('memory');
-    assert.ok(r.timers.size > 0);
-    r.choose('platformer');
-    assert.equal(r.timers.size, 0);
-    const status = r.ids.get('miniStatus').textContent;
-    r.advance(5000);
-    assert.equal(r.ids.get('miniStatus').textContent, status);
-    r.choose('memory');
-    assert.match(r.ids.get('miniStatus').textContent, /Round 1/);
-    assert.ok(r.timers.size > 0);
-    r.ids.get('restartGame').click();
-    assert.match(r.ids.get('miniStatus').textContent, /Round 1/);
-});
-test('snake pauses on focus loss and resumes only on request', () => {
-    const r = runtime(); r.choose('snake'); r.ids.get('miniStart').click();
-    assert.equal(r.timers.size, 1);
-    r.window.emit('blur'); assert.equal(r.timers.size, 0);
-    r.advance(3000); assert.match(r.ids.get('miniStatus').textContent, /Paused/);
-    r.ids.get('pauseGame').click(); assert.equal(r.timers.size, 1);
+test('the file palette opens without leaving the page', () => {
+    const r = runtime();
+    r.document.emit('keydown', {code: 'KeyP', ctrlKey: true, preventDefault() {}, target: r.document.body});
+    assert.equal(r.ids.get('palette').hidden, false);
+    assert.equal(r.window.inspectGame().menuSuspended, true);
+    r.document.emit('keydown', {code: 'Escape', preventDefault() {}, target: r.ids.get('paletteInput')});
+    assert.equal(r.ids.get('palette').hidden, true);
+    assert.equal(r.window.inspectGame().menuSuspended, false);
+    assert.equal(r.window.Platformer.isPaused(), false);
 });
 test('the homepage has no theme or corruption controls and old preferences are retired', () => {
     const r = runtime();
@@ -160,44 +162,6 @@ test('Block Runner fills portrait, landscape, and ultrawide viewports without ch
         assert.ok(r.window.inspectGame().cameraX >= 0);
     }
 });
-test('the portal freezes a runner and returns focus without resetting its run', () => {
-    const r = runtime();
-    r.document.emit('keydown', {code: 'ArrowRight', target: r.ids.get('gameCanvas')}); r.window.stepGame();
-    const x = r.window.inspectGame().x;
-    r.ids.get('portalTrigger').click();
-    assert.equal(r.ids.get('gamePortal').open, true);
-    assert.equal(r.window.inspectGame().menuSuspended, true);
-    r.window.stepGame(); assert.equal(r.window.inspectGame().x, x);
-    r.ids.get('gamePortal').emit('cancel');
-    assert.equal(r.window.inspectGame().menuSuspended, false);
-    assert.equal(r.document.activeElement, r.ids.get('gameCanvas'));
-    assert.equal(r.window.inspectGame().x, x);
-    r.choose('snake'); r.choose('platformer');
-    assert.equal(r.window.inspectGame().x, x);
-});
-test('G toggles the portal, ignores key repeat and typing, and does not reset a mini-game', () => {
-    const r = runtime(); r.choose('snake'); r.advance(140);
-    r.document.emit('keydown', {code: 'KeyG'});
-    assert.equal(r.ids.get('gamePortal').open, true);
-    assert.equal(r.timers.size, 0);
-    r.document.emit('keydown', {code: 'KeyG', repeat: true});
-    assert.equal(r.ids.get('gamePortal').open, true);
-    r.document.emit('keydown', {code: 'KeyG'});
-    assert.equal(r.ids.get('gamePortal').open, false);
-    assert.equal(r.timers.size, 1);
-    r.document.emit('keydown', {code: 'KeyG', target: r.ids.get('modeSelect')});
-    assert.equal(r.ids.get('gamePortal').open, false);
-});
-test('closing the portal preserves a deliberate pause and tab focus loss requires resume', () => {
-    const r = runtime(); r.choose('snake');
-    r.ids.get('pauseGame').click();
-    r.ids.get('portalTrigger').click(); r.ids.get('closePortal').click();
-    assert.equal(r.timers.size, 0);
-    r.ids.get('miniStart').click(); assert.equal(r.timers.size, 1);
-    r.ids.get('portalTrigger').click(); r.window.emit('blur'); r.ids.get('closePortal').click();
-    assert.equal(r.timers.size, 0);
-    r.ids.get('miniStart').click(); assert.equal(r.timers.size, 1);
-});
 test('a link block opens its URL once, pauses the world, and retains a real anchor if pop-ups fail', () => {
     for (const popupThrows of [false, true]) {
         const r = runtime({popupThrows});
@@ -220,43 +184,10 @@ test('a link block opens its URL once, pauses the world, and retains a real anch
         assert.equal(r.window.inspectGame().coins, 1);
     }
 });
-test('memory difficulty changes inside the portal resume with a playable sequence', () => {
-    const r = runtime(); r.choose('memory'); r.ids.get('portalTrigger').click();
-    r.ids.get('modeSelect').value = 'training'; r.ids.get('modeSelect').emit('change');
-    assert.equal(r.timers.size, 0);
-    r.ids.get('closePortal').click();
-    assert.match(r.ids.get('miniStatus').textContent, /Round 1/);
-    r.advance(1600);
-    assert.match(r.ids.get('miniStatus').textContent, /Repeat 1 node/);
-});
-
-test('swapping away and back retains a moved snake and a multi-round memory game', () => {
-    const r = runtime(); r.choose('snake'); r.advance(600);
-    const head = r.window.inspectMini().headX;
-    r.ids.get('portalTrigger').click(); r.choose('memory');
-    r.advance(1300);
-    for (const index of r.window.inspectMini().sequence) r.document.emit('keydown', {code: 'Digit' + (index + 1)});
-    r.advance(950);
-    assert.equal(r.window.inspectMini().round, 2);
-    const sequence = [...r.window.inspectMini().sequence];
-    r.ids.get('portalTrigger').click(); r.choose('snake');
-    assert.equal(r.window.inspectMini().headX, head);
-    r.ids.get('portalTrigger').click(); r.choose('memory');
-    assert.equal(r.window.inspectMini().round, 2);
-    assert.deepEqual([...r.window.inspectMini().sequence], sequence);
-    assert.match(r.ids.get('miniStatus').textContent, /Round 2/);
-});
-
-test('the portal Pause and Resume actions match their labels', () => {
-    const r = runtime(); r.choose('snake');
-    r.ids.get('portalTrigger').click();
-    assert.equal(r.ids.get('pauseGame').textContent, 'Pause');
-    r.ids.get('pauseGame').click();
-    assert.equal(r.window.inspectMini().paused, true);
-    assert.equal(r.ids.get('gamePortal').open, false);
-    r.ids.get('portalTrigger').click();
-    assert.equal(r.ids.get('pauseGame').textContent, 'Resume');
-    r.ids.get('pauseGame').click();
-    assert.equal(r.window.inspectMini().paused, false);
-    assert.equal(r.timers.size, 1);
+test('Block Runner is the only game, and the editor files are the other pages', () => {
+    const html = read('index.html');
+    assert.equal(html.includes('snakeCanvas'), false);
+    assert.equal(html.includes('id="gamePortal"'), false);
+    assert.equal(html.includes('id="gameCanvas"'), true);
+    for (const file of ['about.py', 'work.py', 'social.py', 'game.py']) assert.equal(html.includes(file), true);
 });
