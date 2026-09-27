@@ -5,14 +5,16 @@
     const person = profile.person || {};
     const work = profile.work || {};
     const skill = profile.skill || {};
-    const CHATS = [
-        { id: 'block-runner', slug: 'game', title: 'Block Runner', file: 'Block Runner', panel: 'panel-game', code: null, tail: 'Running', lang: 'Block Runner', game: true },
+    const FILES = [
         { id: 'about.json', slug: 'about', title: 'About me', file: 'about.json', panel: 'panel-about', code: 'code-about', tail: 'about.json', lang: 'JSON' },
         { id: 'work.json', slug: 'work', title: 'Work', file: 'work.json', panel: 'panel-work', code: 'code-work', tail: 'work.json', lang: 'JSON' },
         { id: 'skills.md', slug: 'skills', title: 'Skills', file: 'skills.md', panel: 'panel-skills', code: 'code-skills', tail: 'skills.md', lang: 'Markdown' },
-        { id: 'links.lnk', slug: 'links', title: 'Links', file: 'links.lnk', panel: 'panel-links', code: 'code-links', tail: 'links.lnk', lang: 'Shortcut' }
+        { id: 'links.lnk', slug: 'links', title: 'Links', file: 'links.lnk', panel: 'panel-links', code: 'code-links', tail: 'links.lnk', lang: 'Shortcut' },
+        { id: 'block-runner', slug: 'game', title: 'Block Runner', file: 'Block Runner', panel: 'panel-game', code: null, tail: 'Running', lang: 'Block Runner', game: true }
     ];
+    const EXT_COLORS = ['#3fb950', '#d7ba7d', '#569cd6', '#c586c0', '#4ec9b0', '#ce9178'];
     const MODES = { classic: 'Classic', overclock: 'Overclock', training: 'Training' };
+    let openTabs = FILES.map(file => file.id);
     let active = 'block-runner';
     let paletteIndex = 0;
 
@@ -195,11 +197,26 @@
         });
         return lines;
     }
+    function paintExtensions() {
+        const items = Array.isArray(profile.extensions) ? profile.extensions : [];
+        const rows = items.filter(item => item && typeof item === 'object');
+        if (!rows.length) {
+            $('extList').innerHTML = '<p class="ext-empty">EDIT: add an extension in js/profile.js</p>';
+            return;
+        }
+        $('extList').innerHTML = rows.map((item, index) => {
+            const name = String(item.name || 'Extension');
+            const letter = name.trim().charAt(0).toUpperCase() || 'E';
+            const color = EXT_COLORS[index % EXT_COLORS.length];
+            return `<div class="ext"><div class="ext-icon" style="background:${color}">${esc(letter)}</div><div class="ext-name">${esc(name)}<span class="ext-badge">Installed</span></div><p class="ext-desc">${esc(item.description || '')}</p><p class="ext-pub">${esc(item.publisher || '')}</p></div>`;
+        }).join('');
+    }
     function paint() {
         $('code-about').innerHTML = renderLines(jsonDocument(person));
         $('code-work').innerHTML = renderLines(jsonDocument(work));
         $('code-skills').innerHTML = renderLines(skillLines());
         $('code-links').innerHTML = renderLines(linkLines());
+        paintExtensions();
     }
     function ancestor(node, className) {
         while (node && node !== document) {
@@ -208,11 +225,11 @@
         }
         return null;
     }
-    function chatById(id) {
-        return CHATS.find(chat => chat.id === id) || null;
+    function fileById(id) {
+        return FILES.find(file => file.id === id) || null;
     }
-    function isGame(chat) {
-        return Boolean(chat && chat.game);
+    function isGame(file) {
+        return Boolean(file && file.game);
     }
     function modeLabel() {
         return MODES[$('modeSelect').value] || 'Classic';
@@ -220,7 +237,7 @@
     function hashFile() {
         try {
             const value = decodeURIComponent((location.hash || '').replace(/^#/, ''));
-            return chatById(value) ? value : null;
+            return fileById(value) ? value : null;
         } catch {
             return null;
         }
@@ -228,75 +245,97 @@
     function writeHistory(mode) {
         const history = window.history;
         if (!mode || mode === 'none' || !history || !history.replaceState) return;
-        const url = '#' + encodeURI(active);
+        const url = active ? '#' + encodeURI(active) : (location.pathname || '/');
         if (mode === 'push' && history.pushState) history.pushState({ file: active }, '', url);
         else history.replaceState({ file: active }, '', url);
     }
     function sync(opts = {}) {
         const root = document.documentElement;
-        const chat = chatById(active);
+        const file = fileById(active);
         $('workspace').dataset.active = active || '';
-        $('emptyState').hidden = Boolean(chat);
-        CHATS.forEach(item => {
+        $('emptyState').hidden = Boolean(file);
+        FILES.forEach(item => {
             const on = item.id === active;
             $(item.panel).hidden = !on;
-            const button = $('chat-' + item.slug);
-            button.classList.toggle('is-active', on);
-            button.setAttribute('aria-current', on ? 'true' : 'false');
+            const wrap = $('tabwrap-' + item.slug);
+            wrap.hidden = !openTabs.includes(item.id);
+            wrap.classList.toggle('is-active', on && openTabs.includes(item.id));
+            const tab = $('tab-' + item.slug);
+            tab.setAttribute('aria-selected', on ? 'true' : 'false');
+            tab.tabIndex = on ? 0 : -1;
         });
-        if (chat) {
-            const label = isGame(chat) ? chat.title : chat.file;
-            const hint = isGame(chat) ? '' : '<span class="crumb-hint">edit js/profile.js</span>';
-            $('breadcrumb').innerHTML = `<span class="crumb">amoran.io</span><span class="sep" aria-hidden="true">›</span><span class="crumb current">${esc(chat.title)}</span><span class="sep" aria-hidden="true">›</span><span class="crumb">${esc(chat.tail)}</span>${hint}`;
+        if (file) {
+            const label = isGame(file) ? file.title : file.file;
+            const hint = isGame(file) ? '' : '<span class="crumb-hint">edit js/profile.js</span>';
+            $('breadcrumb').innerHTML = `<span class="crumb">amoran.io</span><span class="sep" aria-hidden="true">›</span><span class="crumb current">${esc(file.title)}</span><span class="sep" aria-hidden="true">›</span><span class="crumb">${esc(file.tail)}</span>${hint}`;
             $('windowTitle').textContent = label + ' — amoran.io';
             document.title = label + ' — amoran.io';
             $('statusFile').textContent = label;
-            $('statusLang').textContent = chat.lang;
-            $('statusDetail').textContent = isGame(chat) ? modeLabel() : 'js/profile.js';
-            if (isGame(chat)) $('statusPos').textContent = 'Running';
+            $('statusLang').textContent = file.lang;
+            $('statusDetail').textContent = isGame(file) ? modeLabel() : 'js/profile.js';
+            if (isGame(file)) $('statusPos').textContent = 'Running';
             else if (!$('statusPos').dataset.pinned) $('statusPos').textContent = 'Ln 1, Col 1';
-            $('editorStatus').textContent = chat.title + ' is open';
+            $('editorStatus').textContent = file.file + ' is open';
+        } else {
+            $('breadcrumb').textContent = '';
+            $('windowTitle').textContent = 'amoran.io';
+            document.title = 'amoran.io';
+            $('statusFile').textContent = 'No file';
+            $('statusLang').textContent = 'Plain Text';
+            $('statusDetail').textContent = 'Extensions';
+            $('statusPos').textContent = '';
+            $('editorStatus').textContent = 'No file is open';
         }
-        if (!isGame(chat)) window.Platformer.setEnabled(false);
+        if (!isGame(file)) window.Platformer.setEnabled(false);
         if ($('palette').hidden) window.Platformer.setMenuOpen(false);
-        if (isGame(chat)) window.Platformer.setEnabled(true);
-        else if (chat) $(chat.code).focus({ preventScroll: true });
-        if (root && root.dataset) $('explorerToggle').setAttribute('aria-pressed', String(root.dataset.sidebar !== 'closed'));
+        if (isGame(file)) window.Platformer.setEnabled(true);
+        else if (file) $(file.code).focus({ preventScroll: true });
+        if (root && root.dataset) $('extensionsToggle').setAttribute('aria-pressed', String(root.dataset.sidebar !== 'closed'));
         writeHistory(opts.history);
     }
     function open(id, opts = {}) {
-        if (!chatById(id)) return;
-        const changed = id !== active;
+        if (!fileById(id)) return;
+        const changed = id !== active || !openTabs.includes(id);
+        if (!openTabs.includes(id)) openTabs.push(id);
         active = id;
         $('palette').hidden = true;
         $('statusPos').dataset.pinned = '';
         sync({ history: opts.history || (changed ? 'push' : 'none') });
     }
-    function cycle(step) {
-        const index = Math.max(0, CHATS.findIndex(chat => chat.id === active));
-        open(CHATS[(index + step + CHATS.length) % CHATS.length].id);
+    function closeFile(id) {
+        const index = openTabs.indexOf(id);
+        if (index < 0) return;
+        openTabs.splice(index, 1);
+        if (active === id) active = openTabs[Math.min(index, openTabs.length - 1)] || null;
+        $('palette').hidden = true;
+        sync({ history: 'push' });
     }
-    function filteredChats() {
+    function cycle(step) {
+        if (!openTabs.length) return;
+        const index = Math.max(0, openTabs.indexOf(active));
+        open(openTabs[(index + step + openTabs.length) % openTabs.length].id);
+    }
+    function filteredFiles() {
         const query = ($('paletteInput').value || '').trim().toLowerCase();
-        return CHATS.filter(chat => !query || chat.title.toLowerCase().includes(query) || chat.file.toLowerCase().includes(query) || chat.lang.toLowerCase().includes(query));
+        return FILES.filter(file => !query || file.title.toLowerCase().includes(query) || file.file.toLowerCase().includes(query) || file.lang.toLowerCase().includes(query));
     }
     function renderPalette() {
-        const list = filteredChats();
+        const list = filteredFiles();
         if (paletteIndex >= list.length) paletteIndex = Math.max(0, list.length - 1);
         if (!list.length) {
-            $('paletteList').innerHTML = '<p class="palette-empty">No matching chat</p>';
+            $('paletteList').innerHTML = '<p class="palette-empty">No matching file</p>';
             return;
         }
-        $('paletteList').innerHTML = list.map((chat, index) => {
+        $('paletteList').innerHTML = list.map((file, index) => {
             const selected = index === paletteIndex ? ' is-selected' : '';
-            return `<button type="button" class="palette-row${selected}" data-file="${esc(chat.id)}" role="option" aria-selected="${index === paletteIndex ? 'true' : 'false'}"><span class="file-name">${esc(chat.title)}</span><small>${esc(chat.file)}</small></button>`;
+            return `<button type="button" class="palette-row${selected}" data-file="${esc(file.id)}" role="option" aria-selected="${index === paletteIndex ? 'true' : 'false'}"><span class="file-name">${esc(file.file)}</span><small>amoran.io</small></button>`;
         }).join('');
     }
     function openPalette() {
         window.Platformer.setMenuOpen(true);
         $('palette').hidden = false;
         $('paletteInput').value = '';
-        paletteIndex = Math.max(0, filteredChats().findIndex(chat => chat.id === active));
+        paletteIndex = Math.max(0, filteredFiles().findIndex(file => file.id === active));
         renderPalette();
         $('paletteInput').focus();
         if ($('paletteInput').select) $('paletteInput').select();
@@ -313,11 +352,11 @@
     function setSidebar(openSidebar) {
         const root = document.documentElement;
         if (root && root.dataset) root.dataset.sidebar = openSidebar ? 'open' : 'closed';
-        $('explorerToggle').setAttribute('aria-pressed', String(openSidebar));
-        if (isGame(chatById(active)) && window.Platformer.resize) window.Platformer.resize();
+        $('extensionsToggle').setAttribute('aria-pressed', String(openSidebar));
+        if (isGame(fileById(active)) && window.Platformer.resize) window.Platformer.resize();
     }
     function markLine(event, pin) {
-        if (isGame(chatById(active))) return;
+        if (isGame(fileById(active))) return;
         const row = ancestor(event.target, 'line');
         if (!row) return;
         if (pin && row.parentElement && row.parentElement.children) {
@@ -352,6 +391,24 @@
     document.querySelectorAll('[data-file]').forEach(el => {
         el.addEventListener('click', () => open(el.dataset.file));
     });
+    document.querySelectorAll('[data-close]').forEach(el => {
+        el.addEventListener('click', event => {
+            if (event.stopPropagation) event.stopPropagation();
+            closeFile(el.dataset.close);
+        });
+    });
+    FILES.forEach(file => {
+        $('tab-' + file.slug).addEventListener('keydown', event => {
+            if (event.code !== 'ArrowLeft' && event.code !== 'ArrowRight') return;
+            if (!openTabs.length) return;
+            event.preventDefault();
+            const index = Math.max(0, openTabs.indexOf(file.id));
+            const next = openTabs[(index + (event.code === 'ArrowRight' ? 1 : -1) + openTabs.length) % openTabs.length];
+            open(next);
+            const target = fileById(next);
+            if (target) $('tab-' + target.slug).focus();
+        });
+    });
     $('paletteList').addEventListener('click', event => {
         const row = ancestor(event.target, 'palette-row');
         const id = row && row.dataset ? row.dataset.file : (event.target.dataset && event.target.dataset.file);
@@ -362,7 +419,7 @@
         renderPalette();
     });
     $('paletteInput').addEventListener('keydown', event => {
-        const list = filteredChats();
+        const list = filteredFiles();
         if (event.code === 'ArrowDown') {
             event.preventDefault();
             paletteIndex = Math.min(list.length - 1, paletteIndex + 1);
@@ -382,14 +439,14 @@
     $('commandCenter').addEventListener('click', togglePalette);
     $('searchActivity').addEventListener('click', togglePalette);
     $('runActivity').addEventListener('click', () => open('block-runner'));
-    $('explorerToggle').addEventListener('click', () => {
+    $('extensionsToggle').addEventListener('click', () => {
         const root = document.documentElement;
         const openNow = !root || !root.dataset || root.dataset.sidebar !== 'closed';
         setSidebar(!openNow);
     });
     $('sidebarBackdrop').addEventListener('click', () => setSidebar(false));
     $('modeSelect').addEventListener('change', () => {
-        if (isGame(chatById(active))) $('statusDetail').textContent = modeLabel();
+        if (isGame(fileById(active))) $('statusDetail').textContent = modeLabel();
     });
     document.addEventListener('keydown', event => {
         const mod = event.ctrlKey || event.metaKey;
@@ -406,7 +463,7 @@
         }
         if (mod && !event.repeat && /^Digit[1-5]$/.test(event.code)) {
             event.preventDefault();
-            open(CHATS[Number(event.code.slice(5)) - 1].id);
+            open(FILES[Number(event.code.slice(5)) - 1].id);
             return;
         }
         if (event.code === 'Escape' && !$('palette').hidden) {
@@ -422,6 +479,7 @@
     window.addEventListener('popstate', () => {
         const id = hashFile();
         if (!id) return;
+        if (!openTabs.includes(id)) openTabs.push(id);
         active = id;
         sync({ history: 'none' });
     });
@@ -433,6 +491,6 @@
     if (hashed) active = hashed;
     sync({ history: 'replace' });
     if (typeof ResizeObserver === 'function') new ResizeObserver(() => {
-        if (isGame(chatById(active)) && window.Platformer.resize) window.Platformer.resize();
+        if (isGame(fileById(active)) && window.Platformer.resize) window.Platformer.resize();
     }).observe($('arcade'));
 })();

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Block Runner — amoran.io</title>
-    <meta name="description" content="Ashley Moran's workspace. Conversations for about, work, skills, and links, plus Block Runner.">
+    <meta name="description" content="Ashley Moran's workspace. Editor tabs for about, work, skills, and links, plus Block Runner.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@
         <header class="titlebar">
             <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
             <div class="window-title" id="windowTitle">Block Runner — amoran.io</div>
-            <button type="button" class="command-center opens-palette" id="commandCenter" aria-label="Go to chat">
+            <button type="button" class="command-center opens-palette" id="commandCenter" aria-label="Go to file">
                 <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.2" fill="none" stroke="currentColor" stroke-width="1.4"></circle><path d="M10.2 10.2L14 14" stroke="currentColor" stroke-width="1.4"></path></svg>
                 <span>amoran.io</span>
                 <kbd data-mod="1">Ctrl</kbd><kbd>P</kbd>
@@ -28,44 +28,46 @@
         </header>
         <div class="workbench">
             <nav class="activity" aria-label="Activity bar">
-                <button type="button" id="explorerToggle" aria-label="Conversations" aria-pressed="true">
-                    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M5 6.2h14v8.2H9.2L5 17.8v-3.4H5z"></path></svg>
+                <button type="button" id="extensionsToggle" aria-label="Extensions" aria-pressed="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.2" height="7.2" rx="1" fill="currentColor"></rect><rect x="13.8" y="3" width="7.2" height="7.2" rx="1" fill="currentColor"></rect><rect x="3" y="13.8" width="7.2" height="7.2" rx="1" fill="currentColor"></rect><rect x="14.6" y="14.6" width="5.6" height="5.6" rx="1" fill="currentColor"></rect></svg>
                 </button>
-                <button type="button" class="opens-palette" id="searchActivity" aria-label="Search conversations">
+                <button type="button" class="opens-palette" id="searchActivity" aria-label="Search files">
                     <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle><path d="M14.8 14.8L20 20" stroke="currentColor" stroke-width="1.6"></path></svg>
                 </button>
                 <button type="button" id="runActivity" aria-label="Open Block Runner">
                     <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"></circle><path fill="currentColor" d="M10.2 8.4l6 3.6-6 3.6z"></path></svg>
                 </button>
             </nav>
-            <button type="button" class="sidebar-backdrop" id="sidebarBackdrop" aria-label="Close conversations" tabindex="-1"></button>
-            <aside class="sidebar" id="sidebar" aria-label="Conversations">
-                <div class="side-title">CHATS</div>
-                <div class="chat-list" id="chatList">
-                    <button type="button" class="chat is-active" id="chat-game" data-file="block-runner" aria-current="true">
-                        <span class="chat-title">Block Runner<span class="live-dot" title="Running"></span></span>
-                        <span class="chat-meta">Running</span>
-                    </button>
-                    <button type="button" class="chat" id="chat-about" data-file="about.json" aria-current="false">
-                        <span class="chat-title">About me</span>
-                        <span class="chat-meta">about.json</span>
-                    </button>
-                    <button type="button" class="chat" id="chat-work" data-file="work.json" aria-current="false">
-                        <span class="chat-title">Work</span>
-                        <span class="chat-meta">work.json</span>
-                    </button>
-                    <button type="button" class="chat" id="chat-skills" data-file="skills.md" aria-current="false">
-                        <span class="chat-title">Skills</span>
-                        <span class="chat-meta">skills.md</span>
-                    </button>
-                    <button type="button" class="chat" id="chat-links" data-file="links.lnk" aria-current="false">
-                        <span class="chat-title">Links</span>
-                        <span class="chat-meta">links.lnk</span>
-                    </button>
-                </div>
-                <div class="side-foot"><kbd data-mod="1">Ctrl</kbd><kbd>P</kbd> Go to chat</div>
+            <button type="button" class="sidebar-backdrop" id="sidebarBackdrop" aria-label="Close extensions" tabindex="-1"></button>
+            <aside class="sidebar" id="sidebar" aria-label="Extensions">
+                <div class="side-title">EXTENSIONS</div>
+                <div class="ext-search"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.2" fill="none" stroke="currentColor" stroke-width="1.4"></circle><path d="M10.2 10.2L14 14" stroke="currentColor" stroke-width="1.4"></path></svg><span>Search Extensions in Marketplace</span></div>
+                <div class="ext-section">INSTALLED</div>
+                <div class="ext-list" id="extList"></div>
             </aside>
             <div class="editor-group" id="editor">
+                <div class="tabs" id="tablist" role="tablist" aria-label="Open editors">
+                    <div class="tab" id="tabwrap-about">
+                        <button type="button" class="tab-main" id="tab-about" data-file="about.json" role="tab" aria-selected="false" tabindex="-1"><span class="mark json" aria-hidden="true"></span><span>about.json</span></button>
+                        <button type="button" class="tab-close" id="close-about" data-close="about.json" aria-label="Close about.json">×</button>
+                    </div>
+                    <div class="tab" id="tabwrap-work">
+                        <button type="button" class="tab-main" id="tab-work" data-file="work.json" role="tab" aria-selected="false" tabindex="-1"><span class="mark json" aria-hidden="true"></span><span>work.json</span></button>
+                        <button type="button" class="tab-close" id="close-work" data-close="work.json" aria-label="Close work.json">×</button>
+                    </div>
+                    <div class="tab" id="tabwrap-skills">
+                        <button type="button" class="tab-main" id="tab-skills" data-file="skills.md" role="tab" aria-selected="false" tabindex="-1"><span class="mark md" aria-hidden="true"></span><span>skills.md</span></button>
+                        <button type="button" class="tab-close" id="close-skills" data-close="skills.md" aria-label="Close skills.md">×</button>
+                    </div>
+                    <div class="tab" id="tabwrap-links">
+                        <button type="button" class="tab-main" id="tab-links" data-file="links.lnk" role="tab" aria-selected="false" tabindex="-1"><span class="mark lnk" aria-hidden="true"></span><span>links.lnk</span></button>
+                        <button type="button" class="tab-close" id="close-links" data-close="links.lnk" aria-label="Close links.lnk">×</button>
+                    </div>
+                    <div class="tab is-active" id="tabwrap-game">
+                        <button type="button" class="tab-main" id="tab-game" data-file="block-runner" role="tab" aria-selected="true"><span class="mark game" aria-hidden="true"></span><span>Block Runner</span><span class="live-dot" title="Running"></span></button>
+                        <button type="button" class="tab-close" id="close-game" data-close="block-runner" aria-label="Close Block Runner">×</button>
+                    </div>
+                </div>
                 <div class="crumbs">
                     <div id="breadcrumb" aria-label="Breadcrumbs"></div>
                     <div class="game-tools" id="gameTools">
@@ -86,23 +88,23 @@
                 <div class="editor-body">
                     <p class="sr-only" id="editorStatus" role="status">Block Runner is open</p>
                     <div class="empty" id="emptyState" hidden>
-                        <strong>No conversation open</strong>
-                        <p>Choose a conversation on the left, or press <kbd data-mod="1">Ctrl</kbd><kbd>P</kbd>.</p>
+                        <strong>No file open</strong>
+                        <p>Press <kbd data-mod="1">Ctrl</kbd><kbd>P</kbd> to open a file.</p>
                     </div>
                     <!-- Buffers are drawn from js/profile.js. Edit that file. -->
-                    <section class="editor-pane" id="panel-about" aria-label="About me" hidden>
+                    <section class="editor-pane" id="panel-about" role="tabpanel" aria-labelledby="tab-about" hidden>
                         <div class="code-scroll" id="code-about" tabindex="0"><p class="code-fallback">Edit js/profile.js. JavaScript draws this file.</p></div>
                     </section>
-                    <section class="editor-pane" id="panel-work" aria-label="Work" hidden>
+                    <section class="editor-pane" id="panel-work" role="tabpanel" aria-labelledby="tab-work" hidden>
                         <div class="code-scroll" id="code-work" tabindex="0"><p class="code-fallback">Edit js/profile.js. JavaScript draws this file.</p></div>
                     </section>
-                    <section class="editor-pane" id="panel-skills" aria-label="Skills" hidden>
+                    <section class="editor-pane" id="panel-skills" role="tabpanel" aria-labelledby="tab-skills" hidden>
                         <div class="code-scroll" id="code-skills" tabindex="0"><p class="code-fallback">Edit js/profile.js. JavaScript draws this file.</p></div>
                     </section>
-                    <section class="editor-pane" id="panel-links" aria-label="Links" hidden>
+                    <section class="editor-pane" id="panel-links" role="tabpanel" aria-labelledby="tab-links" hidden>
                         <div class="code-scroll" id="code-links" tabindex="0"><p class="code-fallback">Edit js/profile.js. JavaScript draws this file.</p></div>
                     </section>
-                    <section class="editor-pane" id="panel-game" aria-label="Block Runner">
+                    <section class="editor-pane" id="panel-game" role="tabpanel" aria-labelledby="tab-game">
                         <main id="arcade" class="arcade-viewport">
                             <section id="platformerPanel" class="game-panel" aria-label="Block Runner platformer">
                                 <div class="stage-shell">
@@ -232,8 +234,8 @@
             </div>
         </div>
     </div>
-    <div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Go to chat" hidden>
-        <input id="paletteInput" type="text" placeholder="Go to chat…" aria-label="Go to chat" autocomplete="off">
+    <div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Go to file" hidden>
+        <input id="paletteInput" type="text" placeholder="Go to file…" aria-label="Go to file" autocomplete="off">
         <div class="palette-list" id="paletteList" role="listbox"></div>
         <div class="palette-hint"><span><kbd data-mod="1">Ctrl</kbd><kbd>P</kbd> toggle</span><span>↑↓ select</span><span>enter open</span><span>esc dismiss</span></div>
     </div>
