@@ -80,27 +80,27 @@ function runtime({width = 1000, height = 500, popupThrows = false} = {}) {
     };
     return {window, document, ids, elements, advance, timers, opened, resize: (width, height) => { viewport = {left: 0, top: 0, width, height, right: width, bottom: height}; window.emit('resize'); }};
 }
-test('editor tabs swap in place and leave the run where it was', () => {
+test('conversations swap in place and leave the run where it was', () => {
     const r = runtime();
     r.document.emit('keydown', {code: 'ArrowRight', target: r.ids.get('gameCanvas')});
     r.window.stepGame();
     const x = r.window.inspectGame().x;
     assert.equal(r.ids.get('panel-game').hidden, false);
-    r.ids.get('tab-about').click();
+    r.ids.get('chat-about').click();
     assert.equal(r.ids.get('panel-about').hidden, false);
     assert.equal(r.ids.get('panel-game').hidden, true);
     assert.equal(r.window.inspectGame().enabled, false);
     r.window.stepGame();
     assert.equal(r.window.inspectGame().x, x);
-    assert.match(r.ids.get('code-about').innerHTML, /Person/);
+    assert.match(r.ids.get('code-about').innerHTML, /Ashley Moran/);
+    assert.match(r.ids.get('code-about').innerHTML, /&quot;summary&quot;/);
     assert.match(r.ids.get('code-about').innerHTML, /EDIT/);
-    assert.match(r.ids.get('code-social').innerHTML, /https:\/\/x\.com\/amoranio/);
     assert.match(r.ids.get('code-work').innerHTML, /https:\/\/exnoscan\.com/);
-    r.ids.get('close-about').click();
-    assert.equal(r.ids.get('tabwrap-about').hidden, true);
-    r.ids.get('file-about').click();
-    assert.equal(r.ids.get('panel-about').hidden, false);
-    r.ids.get('tab-game').click();
+    assert.match(r.ids.get('code-skills').innerHTML, /ashley-moran/);
+    assert.match(r.ids.get('code-skills').innerHTML, /name/);
+    assert.match(r.ids.get('code-links').innerHTML, /https:\/\/x\.com\/amoranio/);
+    assert.match(r.ids.get('code-links').innerHTML, /LinkedIn\.lnk/);
+    r.ids.get('chat-game').click();
     assert.equal(r.window.inspectGame().enabled, true);
     assert.equal(r.window.inspectGame().x, x);
 });
@@ -119,7 +119,7 @@ test('training prevents damage and pit life loss; overclock expires at its time 
     r.ids.get('continueBtn').click();
     assert.equal(r.window.inspectGame().remainingFrames, 5400);
 });
-test('the file palette opens without leaving the page', () => {
+test('the chat palette opens without leaving the page', () => {
     const r = runtime();
     r.document.emit('keydown', {code: 'KeyP', ctrlKey: true, preventDefault() {}, target: r.document.body});
     assert.equal(r.ids.get('palette').hidden, false);
@@ -184,10 +184,11 @@ test('a link block opens its URL once, pauses the world, and retains a real anch
         assert.equal(r.window.inspectGame().coins, 1);
     }
 });
-test('Block Runner is the only game, and the editor files are the other pages', () => {
+test('Block Runner is the only game, and conversations open the other pages', () => {
     const html = read('index.html');
     assert.equal(html.includes('snakeCanvas'), false);
     assert.equal(html.includes('id="gamePortal"'), false);
     assert.equal(html.includes('id="gameCanvas"'), true);
-    for (const file of ['about.py', 'work.py', 'social.py', 'game.py']) assert.equal(html.includes(file), true);
+    assert.equal(html.includes('role="tablist"'), false);
+    for (const file of ['about.json', 'work.json', 'skills.md', 'links.lnk', 'block-runner']) assert.equal(html.includes(file), true);
 });

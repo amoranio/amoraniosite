@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>game.py — amoran.io</title>
-    <meta name="description" content="Ashley Moran's workspace. About, work, and social files, plus Block Runner.">
+    <title>Block Runner — amoran.io</title>
+    <meta name="description" content="Ashley Moran's workspace. Conversations for about, work, skills, and links, plus Block Runner.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
@@ -15,11 +15,11 @@
 </head>
 <body>
     <a class="skip-link" href="#editor">Skip to editor</a>
-    <div class="ide" id="workspace" data-active="game.py">
+    <div class="ide" id="workspace" data-active="block-runner">
         <header class="titlebar">
             <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
-            <div class="window-title" id="windowTitle">game.py — amoran.io</div>
-            <button type="button" class="command-center opens-palette" id="commandCenter" aria-label="Go to file">
+            <div class="window-title" id="windowTitle">Block Runner — amoran.io</div>
+            <button type="button" class="command-center opens-palette" id="commandCenter" aria-label="Go to chat">
                 <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.2" fill="none" stroke="currentColor" stroke-width="1.4"></circle><path d="M10.2 10.2L14 14" stroke="currentColor" stroke-width="1.4"></path></svg>
                 <span>amoran.io</span>
                 <kbd data-mod="1">Ctrl</kbd><kbd>P</kbd>
@@ -28,47 +28,44 @@
         </header>
         <div class="workbench">
             <nav class="activity" aria-label="Activity bar">
-                <button type="button" id="explorerToggle" aria-label="Explorer" aria-pressed="true">
-                    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 5.5h6.2l1.6 1.8H20V18.5H4V5.5zm1.4 3.2v8.4h13.2V8.7H4.4z"></path></svg>
+                <button type="button" id="explorerToggle" aria-label="Conversations" aria-pressed="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M5 6.2h14v8.2H9.2L5 17.8v-3.4H5z"></path></svg>
                 </button>
-                <button type="button" class="opens-palette" id="searchActivity" aria-label="Search files">
+                <button type="button" class="opens-palette" id="searchActivity" aria-label="Search conversations">
                     <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle><path d="M14.8 14.8L20 20" stroke="currentColor" stroke-width="1.6"></path></svg>
                 </button>
                 <button type="button" id="runActivity" aria-label="Open Block Runner">
                     <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"></circle><path fill="currentColor" d="M10.2 8.4l6 3.6-6 3.6z"></path></svg>
                 </button>
             </nav>
-            <button type="button" class="sidebar-backdrop" id="sidebarBackdrop" aria-label="Close explorer" tabindex="-1"></button>
-            <aside class="sidebar" id="sidebar" aria-label="Explorer">
-                <div class="side-title">EXPLORER</div>
-                <button type="button" class="folder" id="folderToggle" aria-expanded="true" aria-controls="fileTree"><span class="chevron" aria-hidden="true"></span>AMORAN.IO</button>
-                <div class="file-tree" id="fileTree" role="tree">
-                    <button type="button" class="file" id="file-about" data-file="about.py" role="treeitem"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="1" width="14" height="6.5" rx="1.2" fill="#3572A5"></rect><rect x="1" y="8.5" width="14" height="6.5" rx="1.2" fill="#ffd343"></rect></svg><span>about.py</span></button>
-                    <button type="button" class="file" id="file-work" data-file="work.py" role="treeitem"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="1" width="14" height="6.5" rx="1.2" fill="#3572A5"></rect><rect x="1" y="8.5" width="14" height="6.5" rx="1.2" fill="#ffd343"></rect></svg><span>work.py</span></button>
-                    <button type="button" class="file" id="file-social" data-file="social.py" role="treeitem"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="1" width="14" height="6.5" rx="1.2" fill="#3572A5"></rect><rect x="1" y="8.5" width="14" height="6.5" rx="1.2" fill="#ffd343"></rect></svg><span>social.py</span></button>
-                    <button type="button" class="file" id="file-game" data-file="game.py" role="treeitem"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="#3fb950" stroke-width="1.3"></circle><path fill="#3fb950" d="M6.6 5.2l5 2.8-5 2.8z"></path></svg><span>game.py</span></button>
+            <button type="button" class="sidebar-backdrop" id="sidebarBackdrop" aria-label="Close conversations" tabindex="-1"></button>
+            <aside class="sidebar" id="sidebar" aria-label="Conversations">
+                <div class="side-title">CHATS</div>
+                <div class="chat-list" id="chatList">
+                    <button type="button" class="chat is-active" id="chat-game" data-file="block-runner" aria-current="true">
+                        <span class="chat-title">Block Runner<span class="live-dot" title="Running"></span></span>
+                        <span class="chat-meta">Running</span>
+                    </button>
+                    <button type="button" class="chat" id="chat-about" data-file="about.json" aria-current="false">
+                        <span class="chat-title">About me</span>
+                        <span class="chat-meta">about.json</span>
+                    </button>
+                    <button type="button" class="chat" id="chat-work" data-file="work.json" aria-current="false">
+                        <span class="chat-title">Work</span>
+                        <span class="chat-meta">work.json</span>
+                    </button>
+                    <button type="button" class="chat" id="chat-skills" data-file="skills.md" aria-current="false">
+                        <span class="chat-title">Skills</span>
+                        <span class="chat-meta">skills.md</span>
+                    </button>
+                    <button type="button" class="chat" id="chat-links" data-file="links.lnk" aria-current="false">
+                        <span class="chat-title">Links</span>
+                        <span class="chat-meta">links.lnk</span>
+                    </button>
                 </div>
-                <div class="side-foot"><kbd data-mod="1">Ctrl</kbd><kbd>P</kbd> Go to file</div>
+                <div class="side-foot"><kbd data-mod="1">Ctrl</kbd><kbd>P</kbd> Go to chat</div>
             </aside>
             <div class="editor-group" id="editor">
-                <div class="tabs" id="tablist" role="tablist" aria-label="Open files">
-                    <div class="tab" id="tabwrap-about">
-                        <button type="button" class="tab-main" id="tab-about" data-file="about.py" role="tab" aria-selected="false" tabindex="-1"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="1" width="14" height="6.5" rx="1.2" fill="#3572A5"></rect><rect x="1" y="8.5" width="14" height="6.5" rx="1.2" fill="#ffd343"></rect></svg><span>about.py</span></button>
-                        <button type="button" class="tab-close" id="close-about" data-close="about.py" aria-label="Close about.py">×</button>
-                    </div>
-                    <div class="tab" id="tabwrap-work">
-                        <button type="button" class="tab-main" id="tab-work" data-file="work.py" role="tab" aria-selected="false" tabindex="-1"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="1" width="14" height="6.5" rx="1.2" fill="#3572A5"></rect><rect x="1" y="8.5" width="14" height="6.5" rx="1.2" fill="#ffd343"></rect></svg><span>work.py</span></button>
-                        <button type="button" class="tab-close" id="close-work" data-close="work.py" aria-label="Close work.py">×</button>
-                    </div>
-                    <div class="tab" id="tabwrap-social">
-                        <button type="button" class="tab-main" id="tab-social" data-file="social.py" role="tab" aria-selected="false" tabindex="-1"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="1" width="14" height="6.5" rx="1.2" fill="#3572A5"></rect><rect x="1" y="8.5" width="14" height="6.5" rx="1.2" fill="#ffd343"></rect></svg><span>social.py</span></button>
-                        <button type="button" class="tab-close" id="close-social" data-close="social.py" aria-label="Close social.py">×</button>
-                    </div>
-                    <div class="tab is-active" id="tabwrap-game">
-                        <button type="button" class="tab-main" id="tab-game" data-file="game.py" role="tab" aria-selected="true"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="#3fb950" stroke-width="1.3"></circle><path fill="#3fb950" d="M6.6 5.2l5 2.8-5 2.8z"></path></svg><span>game.py</span><span class="live-dot" title="Running"></span></button>
-                        <button type="button" class="tab-close" id="close-game" data-close="game.py" aria-label="Close game.py">×</button>
-                    </div>
-                </div>
                 <div class="crumbs">
                     <div id="breadcrumb" aria-label="Breadcrumbs"></div>
                     <div class="game-tools" id="gameTools">
@@ -87,22 +84,25 @@
                     </div>
                 </div>
                 <div class="editor-body">
-                    <p class="sr-only" id="editorStatus" role="status">game.py is open</p>
+                    <p class="sr-only" id="editorStatus" role="status">Block Runner is open</p>
                     <div class="empty" id="emptyState" hidden>
-                        <strong>No file open</strong>
-                        <p>Choose a file in the explorer, or press <kbd data-mod="1">Ctrl</kbd><kbd>P</kbd>.</p>
+                        <strong>No conversation open</strong>
+                        <p>Choose a conversation on the left, or press <kbd data-mod="1">Ctrl</kbd><kbd>P</kbd>.</p>
                     </div>
-                    <!-- Python tabs are drawn from js/profile.js. Edit that file. -->
-                    <section class="editor-pane" id="panel-about" role="tabpanel" aria-labelledby="tab-about" hidden>
+                    <!-- Buffers are drawn from js/profile.js. Edit that file. -->
+                    <section class="editor-pane" id="panel-about" aria-label="About me" hidden>
                         <div class="code-scroll" id="code-about" tabindex="0"><p class="code-fallback">Edit js/profile.js. JavaScript draws this file.</p></div>
                     </section>
-                    <section class="editor-pane" id="panel-work" role="tabpanel" aria-labelledby="tab-work" hidden>
+                    <section class="editor-pane" id="panel-work" aria-label="Work" hidden>
                         <div class="code-scroll" id="code-work" tabindex="0"><p class="code-fallback">Edit js/profile.js. JavaScript draws this file.</p></div>
                     </section>
-                    <section class="editor-pane" id="panel-social" role="tabpanel" aria-labelledby="tab-social" hidden>
-                        <div class="code-scroll" id="code-social" tabindex="0"><p class="code-fallback">Edit js/profile.js. JavaScript draws this file.</p></div>
+                    <section class="editor-pane" id="panel-skills" aria-label="Skills" hidden>
+                        <div class="code-scroll" id="code-skills" tabindex="0"><p class="code-fallback">Edit js/profile.js. JavaScript draws this file.</p></div>
                     </section>
-                    <section class="editor-pane" id="panel-game" role="tabpanel" aria-labelledby="tab-game">
+                    <section class="editor-pane" id="panel-links" aria-label="Links" hidden>
+                        <div class="code-scroll" id="code-links" tabindex="0"><p class="code-fallback">Edit js/profile.js. JavaScript draws this file.</p></div>
+                    </section>
+                    <section class="editor-pane" id="panel-game" aria-label="Block Runner">
                         <main id="arcade" class="arcade-viewport">
                             <section id="platformerPanel" class="game-panel" aria-label="Block Runner platformer">
                                 <div class="stage-shell">
@@ -220,7 +220,7 @@
                 </div>
                 <footer class="status">
                     <div class="status-side">
-                        <span class="status-item" id="statusFile">game.py</span>
+                        <span class="status-item" id="statusFile">Block Runner</span>
                         <span class="status-item" id="statusDetail">Classic</span>
                     </div>
                     <div class="status-side right">
@@ -232,8 +232,8 @@
             </div>
         </div>
     </div>
-    <div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Go to file" hidden>
-        <input id="paletteInput" type="text" placeholder="Go to file…" aria-label="Go to file" autocomplete="off">
+    <div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Go to chat" hidden>
+        <input id="paletteInput" type="text" placeholder="Go to chat…" aria-label="Go to chat" autocomplete="off">
         <div class="palette-list" id="paletteList" role="listbox"></div>
         <div class="palette-hint"><span><kbd data-mod="1">Ctrl</kbd><kbd>P</kbd> toggle</span><span>↑↓ select</span><span>enter open</span><span>esc dismiss</span></div>
     </div>

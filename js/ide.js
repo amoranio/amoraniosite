@@ -4,15 +4,16 @@
     const profile = window.AMORAN_PROFILE || {};
     const person = profile.person || {};
     const work = profile.work || {};
-    const FILES = [
-        { id: 'about.py', slug: 'about', panel: 'panel-about', code: 'code-about', tail: 'Person', lang: 'Python' },
-        { id: 'work.py', slug: 'work', panel: 'panel-work', code: 'code-work', tail: 'projects', lang: 'Python' },
-        { id: 'social.py', slug: 'social', panel: 'panel-social', code: 'code-social', tail: 'profiles', lang: 'Python' },
-        { id: 'game.py', slug: 'game', panel: 'panel-game', code: null, tail: 'Block Runner', lang: 'Block Runner' }
+    const skill = profile.skill || {};
+    const CHATS = [
+        { id: 'block-runner', slug: 'game', title: 'Block Runner', file: 'Block Runner', panel: 'panel-game', code: null, tail: 'Running', lang: 'Block Runner', game: true },
+        { id: 'about.json', slug: 'about', title: 'About me', file: 'about.json', panel: 'panel-about', code: 'code-about', tail: 'about.json', lang: 'JSON' },
+        { id: 'work.json', slug: 'work', title: 'Work', file: 'work.json', panel: 'panel-work', code: 'code-work', tail: 'work.json', lang: 'JSON' },
+        { id: 'skills.md', slug: 'skills', title: 'Skills', file: 'skills.md', panel: 'panel-skills', code: 'code-skills', tail: 'skills.md', lang: 'Markdown' },
+        { id: 'links.lnk', slug: 'links', title: 'Links', file: 'links.lnk', panel: 'panel-links', code: 'code-links', tail: 'links.lnk', lang: 'Shortcut' }
     ];
     const MODES = { classic: 'Classic', overclock: 'Overclock', training: 'Training' };
-    let openTabs = FILES.map(file => file.id);
-    let active = 'game.py';
+    let active = 'block-runner';
     let paletteIndex = 0;
 
     function esc(value) {
@@ -50,131 +51,155 @@
             return `<div class="line" data-ln="${index + 1}"><span class="gutter" aria-hidden="true">${index + 1}</span><span class="source i${indent}" style="--indent:${indent}">${body}${caret}</span></div>`;
         }).join('');
     }
-    function field(name, value, href) {
-        const tokens = [t('bi', 'self'), t('pn', '.'), t('vr', name), t('pn', ' = ')];
-        if (value === null || value === undefined || value === '') tokens.push(t('bi', 'None'), t('cm', '  # EDIT: set this in js/profile.js, or leave None'));
-        else tokens.push(q(value, href));
-        return line(2, ...tokens);
+    function isPlain(value) {
+        return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
     }
-    function listReturn(lines, items) {
-        const list = Array.isArray(items) ? items : [];
-        lines.push(line(2, t('kw', 'return '), t('pn', '[')));
-        if (!list.length) lines.push(line(3, t('cm', '# EDIT: add a string.')));
-        list.forEach(item => lines.push(line(3, q(item), t('pn', ','))));
-        lines.push(line(2, t('pn', ']')));
+    function scalar(value) {
+        if (value === null || value === undefined) return [t('bi', 'null')];
+        if (typeof value === 'number' && Number.isFinite(value)) return [t('num', String(value))];
+        if (typeof value === 'boolean') return [t('bi', value ? 'true' : 'false')];
+        return [qUrl(String(value))];
     }
-    function aboutLines() {
+    function jsonKey(key) {
+        return t('key', '"' + String(key).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"');
+    }
+    function emitKeyed(lines, indent, key, value, comma) {
+        const keyTok = jsonKey(key);
+        if (Array.isArray(value)) {
+            if (!value.length) {
+                lines.push(line(indent, keyTok, t('pn', ': []' + comma)));
+                return;
+            }
+            lines.push(line(indent, keyTok, t('pn', ': [')));
+            value.forEach((item, index) => emitJson(lines, indent + 1, item, index === value.length - 1 ? '' : ','));
+            lines.push(line(indent, t('pn', ']' + comma)));
+            return;
+        }
+        if (isPlain(value)) {
+            const keys = Object.keys(value);
+            if (!keys.length) {
+                lines.push(line(indent, keyTok, t('pn', ': {}' + comma)));
+                return;
+            }
+            lines.push(line(indent, keyTok, t('pn', ': {')));
+            keys.forEach((child, index) => emitKeyed(lines, indent + 1, child, value[child], index === keys.length - 1 ? '' : ','));
+            lines.push(line(indent, t('pn', '}' + comma)));
+            return;
+        }
+        const tokens = [keyTok, t('pn', ': '), ...scalar(value)];
+        if (comma) tokens.push(t('pn', comma));
+        lines.push(line(indent, ...tokens));
+    }
+    function emitJson(lines, indent, value, suffix) {
+        if (Array.isArray(value)) {
+            if (!value.length) {
+                lines.push(line(indent, t('pn', '[]' + suffix)));
+                return;
+            }
+            lines.push(line(indent, t('pn', '[')));
+            value.forEach((item, index) => emitJson(lines, indent + 1, item, index === value.length - 1 ? '' : ','));
+            lines.push(line(indent, t('pn', ']' + suffix)));
+            return;
+        }
+        if (isPlain(value)) {
+            const keys = Object.keys(value);
+            lines.push(line(indent, t('pn', '{')));
+            if (!keys.length) lines.push(line(indent + 1, t('cm', '// EDIT')));
+            keys.forEach((key, index) => emitKeyed(lines, indent + 1, key, value[key], index === keys.length - 1 ? '' : ','));
+            lines.push(line(indent, t('pn', '}' + suffix)));
+            return;
+        }
+        const tokens = scalar(value);
+        if (suffix) tokens.push(t('pn', suffix));
+        lines.push(line(indent, ...tokens));
+    }
+    function jsonDocument(value) {
+        const lines = [line(0, t('cm', '// Edit js/profile.js'))];
+        emitJson(lines, 0, value && typeof value === 'object' ? value : {}, '');
+        return lines;
+    }
+    function heading(text) {
+        const label = String(text || '').replace(/-/g, ' ');
+        return label.charAt(0).toUpperCase() + label.slice(1);
+    }
+    function skillLines() {
         const lines = [
-            line(0, t('str', '"""')),
-            line(0, t('str', person.name || 'Ashley Moran')),
-            line(0, person.site ? t('str', String(person.site), safeUrl(person.site)) : t('str', '')),
-            line(0, t('str', '')),
-            line(0, t('str', 'The lines marked EDIT are yours.')),
-            line(0, t('str', 'Change them in js/profile.js.')),
-            line(0, t('str', '"""')),
+            line(0, t('pn', '---')),
+            line(0, t('key', 'name'), t('pn', ': '), t('str', skill.name || 'ashley-moran')),
+            line(0, t('key', 'description'), t('pn', ': '), q(skill.description || 'EDIT: when an agent should use this skill.')),
+            line(0, t('pn', '---')),
             line(0),
-            line(0, t('kw', 'class '), t('cls', 'Person'), t('pn', ':')),
-            line(1, t('kw', 'def '), t('fn', '__init__'), t('pn', '('), t('bi', 'self'), t('pn', '):')),
-            field('name', person.name),
-            field('handle', person.handle),
-            field('site', person.site, safeUrl(person.site)),
-            field('location', person.location),
+            line(0, t('hd', '# ' + (person.name || 'Ashley Moran'))),
             line(0),
-            line(1, t('kw', 'def '), t('fn', 'summary'), t('pn', '('), t('bi', 'self'), t('pn', '):')),
-            line(2, t('cm', '# EDIT: a sentence about you.')),
-            line(2, t('kw', 'return '), q(person.summary || '')),
+            line(0, t('hd', '## Summary')),
             line(0),
-            line(1, t('kw', 'def '), t('fn', 'currently'), t('pn', '('), t('bi', 'self'), t('pn', '):')),
-            line(2, t('cm', '# EDIT: add a string for each thing you are doing.'))
+            line(0, t('tx', person.summary || 'EDIT: a sentence about you.')),
+            line(0),
+            line(0, t('hd', '## Currently')),
+            line(0)
         ];
-        listReturn(lines, person.currently);
+        const current = Array.isArray(person.currently) ? person.currently : [];
+        if (!current.length) lines.push(line(0, t('cm', '<!-- EDIT: add a currently item in js/profile.js -->')));
+        current.forEach(item => lines.push(line(0, t('pn', '- '), t('tx', String(item)))));
         lines.push(line(0));
-        lines.push(line(1, t('kw', 'def '), t('fn', 'interests'), t('pn', '('), t('bi', 'self'), t('pn', '):')));
-        lines.push(line(2, t('cm', '# EDIT: add a key, or add items to a list.')));
-        const interests = person.interests && typeof person.interests === 'object' ? person.interests : {};
+        lines.push(line(0, t('hd', '## Interests')));
+        const interests = isPlain(person.interests) ? person.interests : {};
         const keys = Object.keys(interests);
-        lines.push(line(2, t('kw', 'return '), t('pn', '{')));
-        if (!keys.length) lines.push(line(3, t('cm', '# EDIT: add a key and a list.')));
-        keys.forEach((key, index) => {
-            const last = index === keys.length - 1;
+        if (!keys.length) {
+            lines.push(line(0));
+            lines.push(line(0, t('cm', '<!-- EDIT: add an interest in js/profile.js -->')));
+        }
+        keys.forEach(key => {
+            lines.push(line(0));
+            lines.push(line(0, t('hd', '### ' + heading(key))));
+            lines.push(line(0));
             const value = interests[key];
-            if (Array.isArray(value)) {
-                lines.push(line(3, q(key), t('pn', ': [')));
-                if (!value.length) lines.push(line(4, t('cm', '# EDIT')));
-                value.forEach(item => lines.push(line(4, q(item), t('pn', ','))));
-                lines.push(line(3, t('pn', last ? ']' : '],')));
-            } else lines.push(line(3, q(key), t('pn', ': '), q(value), t('pn', last ? '' : ',')));
+            const items = Array.isArray(value) ? value : [value];
+            if (!items.length) lines.push(line(0, t('cm', '<!-- EDIT -->')));
+            items.forEach(item => lines.push(line(0, t('pn', '- '), t('tx', String(item ?? '')))));
         });
-        lines.push(line(2, t('pn', '}')));
         lines.push(line(0));
-        lines.push(line(0));
-        lines.push(line(0, t('vr', 'ashley'), t('pn', ' = '), t('cls', 'Person'), t('pn', '()')));
-        lines.push(line(0));
-        lines.push(line(0));
-        lines.push(line(0, t('kw', 'if '), t('bi', '__name__'), t('pn', ' == '), q('__main__'), t('pn', ':')));
-        lines.push(line(1, t('fn', 'print'), t('pn', '('), t('vr', 'ashley'), t('pn', '.'), t('fn', 'summary'), t('pn', '())')));
+        if (skill.notes) lines.push(line(0, t('tx', String(skill.notes))));
+        else lines.push(line(0, t('cm', '<!-- EDIT: optional notes in js/profile.js, skill.notes -->')));
         return lines;
     }
-    function callBlock(lines, fn, rows) {
-        lines.push(line(1, t('fn', fn), t('pn', '(')));
-        rows.forEach(row => lines.push(line(2, row, t('pn', ','))));
-        lines.push(line(1, t('pn', '),')));
+    function lnkName(name) {
+        const base = String(name || 'link').replace(/[\\/:*?"<>|]/g, '').trim() || 'link';
+        return /\.lnk$/i.test(base) ? base : base + '.lnk';
     }
-    function workLines() {
+    function shortcut(lines, name, target, comment) {
+        const file = lnkName(name);
+        lines.push(line(0, t('cm', '; ' + file)));
+        lines.push(line(0, t('cls', '[' + file + ']')));
+        lines.push(line(1, t('key', 'Target'), t('pn', '='), qUrl(target || '')));
+        lines.push(line(1, t('key', 'Comment'), t('pn', '='), q(comment || '')));
+        lines.push(line(1, t('key', 'Window'), t('pn', '='), q('Normal')));
+        lines.push(line(0));
+    }
+    function linkLines() {
         const lines = [
-            line(0, t('str', '"""')),
-            line(0, t('str', 'Work')),
-            line(0, t('str', '')),
-            line(0, t('str', 'Edit the projects list in js/profile.js.')),
-            line(0, t('str', '"""')),
-            line(0),
-            line(0, t('kw', 'def '), t('fn', 'project'), t('pn', '('), t('vr', 'name'), t('pn', ', '), t('vr', 'url'), t('pn', ', '), t('vr', 'note'), t('pn', '):')),
-            line(1, t('kw', 'return '), t('pn', '{'), q('name'), t('pn', ': '), t('vr', 'name'), t('pn', ', '), q('url'), t('pn', ': '), t('vr', 'url'), t('pn', ', '), q('note'), t('pn', ': '), t('vr', 'note'), t('pn', '}')),
-            line(0),
-            line(0),
-            line(0, t('kw', 'def '), t('fn', 'focus'), t('pn', '():')),
-            line(1, t('cm', '# EDIT: what you are focused on.')),
-            line(1, t('kw', 'return '), q(work.focus || '')),
-            line(0),
-            line(0),
-            line(0, t('vr', 'projects'), t('pn', ' = [')),
+            line(0, t('cm', '; Shortcut properties. A Windows .lnk file is binary, so this buffer shows the fields.')),
+            line(0, t('cm', '; Edit social and projects in js/profile.js.')),
+            line(0)
         ];
+        const social = Array.isArray(profile.social) ? profile.social : [];
         const projects = Array.isArray(work.projects) ? work.projects : [];
-        if (!projects.length) lines.push(line(1, t('cm', '# EDIT: add a project() call.')));
-        projects.forEach(project => {
-            if (!project || typeof project !== 'object') return;
-            callBlock(lines, 'project', [q(project.name || ''), qUrl(project.url || ''), q(project.note || '')]);
-        });
-        lines.push(line(0, t('pn', ']')));
-        return lines;
-    }
-    function socialLines() {
-        const lines = [
-            line(0, t('str', '"""')),
-            line(0, t('str', 'Social')),
-            line(0, t('str', '')),
-            line(0, t('str', 'Edit the profiles list in js/profile.js.')),
-            line(0, t('str', '"""')),
-            line(0),
-            line(0, t('kw', 'def '), t('fn', 'link'), t('pn', '('), t('vr', 'name'), t('pn', ', '), t('vr', 'handle'), t('pn', ', '), t('vr', 'url'), t('pn', '):')),
-            line(1, t('kw', 'return '), t('pn', '{'), q('name'), t('pn', ': '), t('vr', 'name'), t('pn', ', '), q('handle'), t('pn', ': '), t('vr', 'handle'), t('pn', ', '), q('url'), t('pn', ': '), t('vr', 'url'), t('pn', '}')),
-            line(0),
-            line(0),
-            line(0, t('vr', 'profiles'), t('pn', ' = [')),
-        ];
-        const profiles = Array.isArray(profile.social) ? profile.social : [];
-        if (!profiles.length) lines.push(line(1, t('cm', '# EDIT: add a link() call.')));
-        profiles.forEach(item => {
+        if (!social.length && !projects.length) lines.push(line(0, t('cm', '; EDIT: add a profile or a project.')));
+        social.forEach(item => {
             if (!item || typeof item !== 'object') return;
-            callBlock(lines, 'link', [q(item.name || ''), q(item.handle || ''), qUrl(item.url || '')]);
+            shortcut(lines, item.name, item.url, item.handle || '');
         });
-        lines.push(line(0, t('pn', ']')));
+        projects.forEach(item => {
+            if (!item || typeof item !== 'object') return;
+            shortcut(lines, item.name, item.url, item.note || '');
+        });
         return lines;
     }
     function paint() {
-        $('code-about').innerHTML = renderLines(aboutLines());
-        $('code-work').innerHTML = renderLines(workLines());
-        $('code-social').innerHTML = renderLines(socialLines());
+        $('code-about').innerHTML = renderLines(jsonDocument(person));
+        $('code-work').innerHTML = renderLines(jsonDocument(work));
+        $('code-skills').innerHTML = renderLines(skillLines());
+        $('code-links').innerHTML = renderLines(linkLines());
     }
     function ancestor(node, className) {
         while (node && node !== document) {
@@ -183,8 +208,11 @@
         }
         return null;
     }
-    function fileById(id) {
-        return FILES.find(file => file.id === id) || null;
+    function chatById(id) {
+        return CHATS.find(chat => chat.id === id) || null;
+    }
+    function isGame(chat) {
+        return Boolean(chat && chat.game);
     }
     function modeLabel() {
         return MODES[$('modeSelect').value] || 'Classic';
@@ -192,7 +220,7 @@
     function hashFile() {
         try {
             const value = decodeURIComponent((location.hash || '').replace(/^#/, ''));
-            return fileById(value) ? value : null;
+            return chatById(value) ? value : null;
         } catch {
             return null;
         }
@@ -200,98 +228,75 @@
     function writeHistory(mode) {
         const history = window.history;
         if (!mode || mode === 'none' || !history || !history.replaceState) return;
-        const url = active ? '#' + encodeURI(active) : (location.pathname || '#');
+        const url = '#' + encodeURI(active);
         if (mode === 'push' && history.pushState) history.pushState({ file: active }, '', url);
         else history.replaceState({ file: active }, '', url);
     }
     function sync(opts = {}) {
         const root = document.documentElement;
-        const file = fileById(active);
+        const chat = chatById(active);
         $('workspace').dataset.active = active || '';
-        $('emptyState').hidden = Boolean(file);
-        FILES.forEach(item => {
+        $('emptyState').hidden = Boolean(chat);
+        CHATS.forEach(item => {
             const on = item.id === active;
             $(item.panel).hidden = !on;
-            $('tabwrap-' + item.slug).hidden = !openTabs.includes(item.id);
-            const tab = $('tab-' + item.slug);
-            tab.classList.toggle('is-active', on);
-            tab.setAttribute('aria-selected', on ? 'true' : 'false');
-            tab.tabIndex = on ? 0 : -1;
-            const explorer = $('file-' + item.slug);
-            explorer.classList.toggle('is-active', on);
-            explorer.setAttribute('aria-current', on ? 'true' : 'false');
+            const button = $('chat-' + item.slug);
+            button.classList.toggle('is-active', on);
+            button.setAttribute('aria-current', on ? 'true' : 'false');
         });
-        if (file) {
-            const hint = file.id === 'game.py' ? '' : '<span class="crumb-hint">edit js/profile.js</span>';
-            $('breadcrumb').innerHTML = `<span class="crumb">amoran.io</span><span class="sep" aria-hidden="true">›</span><span class="crumb current">${esc(file.id)}</span><span class="sep" aria-hidden="true">›</span><span class="crumb">${esc(file.tail)}</span>${hint}`;
-            $('windowTitle').textContent = file.id + ' — amoran.io';
-            document.title = file.id + ' — amoran.io';
-            $('statusFile').textContent = file.id;
-            $('statusLang').textContent = file.lang;
-            $('statusDetail').textContent = file.id === 'game.py' ? modeLabel() : 'js/profile.js';
-            if (file.id === 'game.py') $('statusPos').textContent = 'Running';
+        if (chat) {
+            const label = isGame(chat) ? chat.title : chat.file;
+            const hint = isGame(chat) ? '' : '<span class="crumb-hint">edit js/profile.js</span>';
+            $('breadcrumb').innerHTML = `<span class="crumb">amoran.io</span><span class="sep" aria-hidden="true">›</span><span class="crumb current">${esc(chat.title)}</span><span class="sep" aria-hidden="true">›</span><span class="crumb">${esc(chat.tail)}</span>${hint}`;
+            $('windowTitle').textContent = label + ' — amoran.io';
+            document.title = label + ' — amoran.io';
+            $('statusFile').textContent = label;
+            $('statusLang').textContent = chat.lang;
+            $('statusDetail').textContent = isGame(chat) ? modeLabel() : 'js/profile.js';
+            if (isGame(chat)) $('statusPos').textContent = 'Running';
             else if (!$('statusPos').dataset.pinned) $('statusPos').textContent = 'Ln 1, Col 1';
-            $('editorStatus').textContent = file.id + ' is open';
-        } else {
-            $('breadcrumb').textContent = '';
-            $('windowTitle').textContent = 'amoran.io';
-            document.title = 'amoran.io';
-            $('statusFile').textContent = 'No file';
-            $('statusLang').textContent = 'Plain Text';
-            $('statusDetail').textContent = 'Explorer';
-            $('statusPos').textContent = '';
-            $('editorStatus').textContent = 'No file is open';
+            $('editorStatus').textContent = chat.title + ' is open';
         }
-        if (!file || file.id !== 'game.py') window.Platformer.setEnabled(false);
+        if (!isGame(chat)) window.Platformer.setEnabled(false);
         if ($('palette').hidden) window.Platformer.setMenuOpen(false);
-        if (file && file.id === 'game.py') window.Platformer.setEnabled(true);
-        else if (file) $(file.code).focus({ preventScroll: true });
+        if (isGame(chat)) window.Platformer.setEnabled(true);
+        else if (chat) $(chat.code).focus({ preventScroll: true });
         if (root && root.dataset) $('explorerToggle').setAttribute('aria-pressed', String(root.dataset.sidebar !== 'closed'));
         writeHistory(opts.history);
     }
     function open(id, opts = {}) {
-        if (!fileById(id)) return;
-        const changed = id !== active || !openTabs.includes(id);
-        if (!openTabs.includes(id)) openTabs.push(id);
+        if (!chatById(id)) return;
+        const changed = id !== active;
         active = id;
         $('palette').hidden = true;
         $('statusPos').dataset.pinned = '';
         sync({ history: opts.history || (changed ? 'push' : 'none') });
     }
-    function closeFile(id) {
-        const index = openTabs.indexOf(id);
-        if (index < 0) return;
-        openTabs.splice(index, 1);
-        if (active === id) active = openTabs[Math.min(index, openTabs.length - 1)] || null;
-        $('palette').hidden = true;
-        sync({ history: 'push' });
-    }
     function cycle(step) {
-        if (!openTabs.length) return;
-        const index = Math.max(0, openTabs.indexOf(active));
-        open(openTabs[(index + step + openTabs.length) % openTabs.length]);
+        const index = Math.max(0, CHATS.findIndex(chat => chat.id === active));
+        open(CHATS[(index + step + CHATS.length) % CHATS.length].id);
     }
-    function filteredFiles() {
+    function filteredChats() {
         const query = ($('paletteInput').value || '').trim().toLowerCase();
-        return FILES.filter(file => !query || file.id.toLowerCase().includes(query) || file.lang.toLowerCase().includes(query));
+        return CHATS.filter(chat => !query || chat.title.toLowerCase().includes(query) || chat.file.toLowerCase().includes(query) || chat.lang.toLowerCase().includes(query));
     }
     function renderPalette() {
-        const list = filteredFiles();
+        const list = filteredChats();
         if (paletteIndex >= list.length) paletteIndex = Math.max(0, list.length - 1);
         if (!list.length) {
-            $('paletteList').innerHTML = '<p class="palette-empty">No matching file</p>';
+            $('paletteList').innerHTML = '<p class="palette-empty">No matching chat</p>';
             return;
         }
-        $('paletteList').innerHTML = list.map((file, index) => {
+        $('paletteList').innerHTML = list.map((chat, index) => {
             const selected = index === paletteIndex ? ' is-selected' : '';
-            return `<button type="button" class="palette-row${selected}" data-file="${esc(file.id)}" role="option" aria-selected="${index === paletteIndex ? 'true' : 'false'}"><span class="file-name">${esc(file.id)}</span><small>amoran.io</small></button>`;
+            return `<button type="button" class="palette-row${selected}" data-file="${esc(chat.id)}" role="option" aria-selected="${index === paletteIndex ? 'true' : 'false'}"><span class="file-name">${esc(chat.title)}</span><small>${esc(chat.file)}</small></button>`;
         }).join('');
     }
     function openPalette() {
         window.Platformer.setMenuOpen(true);
         $('palette').hidden = false;
         $('paletteInput').value = '';
-        paletteIndex = Math.max(0, filteredFiles().findIndex(file => file.id === active));
+        paletteIndex = Math.max(0, filteredChats().findIndex(chat => chat.id === active));
         renderPalette();
         $('paletteInput').focus();
         if ($('paletteInput').select) $('paletteInput').select();
@@ -309,10 +314,10 @@
         const root = document.documentElement;
         if (root && root.dataset) root.dataset.sidebar = openSidebar ? 'open' : 'closed';
         $('explorerToggle').setAttribute('aria-pressed', String(openSidebar));
-        if (active === 'game.py' && window.Platformer.resize) window.Platformer.resize();
+        if (isGame(chatById(active)) && window.Platformer.resize) window.Platformer.resize();
     }
     function markLine(event, pin) {
-        if (!active || active === 'game.py') return;
+        if (isGame(chatById(active))) return;
         const row = ancestor(event.target, 'line');
         if (!row) return;
         if (pin && row.parentElement && row.parentElement.children) {
@@ -339,31 +344,13 @@
     }
 
     paint();
-    ['code-about', 'code-work', 'code-social'].forEach(id => {
+    ['code-about', 'code-work', 'code-skills', 'code-links'].forEach(id => {
         const el = $(id);
         el.addEventListener('click', event => markLine(event, true));
         el.addEventListener('mousemove', event => markLine(event, false));
     });
     document.querySelectorAll('[data-file]').forEach(el => {
         el.addEventListener('click', () => open(el.dataset.file));
-    });
-    document.querySelectorAll('[data-close]').forEach(el => {
-        el.addEventListener('click', event => {
-            if (event.stopPropagation) event.stopPropagation();
-            closeFile(el.dataset.close);
-        });
-    });
-    FILES.forEach(file => {
-        $('tab-' + file.slug).addEventListener('keydown', event => {
-            if (event.code !== 'ArrowLeft' && event.code !== 'ArrowRight') return;
-            if (!openTabs.length) return;
-            event.preventDefault();
-            const index = Math.max(0, openTabs.indexOf(file.id));
-            const next = openTabs[(index + (event.code === 'ArrowRight' ? 1 : -1) + openTabs.length) % openTabs.length];
-            open(next);
-            const target = fileById(next);
-            if (target) $('tab-' + target.slug).focus();
-        });
     });
     $('paletteList').addEventListener('click', event => {
         const row = ancestor(event.target, 'palette-row');
@@ -375,7 +362,7 @@
         renderPalette();
     });
     $('paletteInput').addEventListener('keydown', event => {
-        const list = filteredFiles();
+        const list = filteredChats();
         if (event.code === 'ArrowDown') {
             event.preventDefault();
             paletteIndex = Math.min(list.length - 1, paletteIndex + 1);
@@ -394,20 +381,15 @@
     });
     $('commandCenter').addEventListener('click', togglePalette);
     $('searchActivity').addEventListener('click', togglePalette);
-    $('runActivity').addEventListener('click', () => open('game.py'));
+    $('runActivity').addEventListener('click', () => open('block-runner'));
     $('explorerToggle').addEventListener('click', () => {
         const root = document.documentElement;
         const openNow = !root || !root.dataset || root.dataset.sidebar !== 'closed';
         setSidebar(!openNow);
     });
     $('sidebarBackdrop').addEventListener('click', () => setSidebar(false));
-    $('folderToggle').addEventListener('click', () => {
-        const expanded = $('folderToggle').getAttribute('aria-expanded') === 'true';
-        $('folderToggle').setAttribute('aria-expanded', String(!expanded));
-        $('fileTree').hidden = expanded;
-    });
     $('modeSelect').addEventListener('change', () => {
-        if (active === 'game.py') $('statusDetail').textContent = modeLabel();
+        if (isGame(chatById(active))) $('statusDetail').textContent = modeLabel();
     });
     document.addEventListener('keydown', event => {
         const mod = event.ctrlKey || event.metaKey;
@@ -422,9 +404,9 @@
             cycle(event.shiftKey ? -1 : 1);
             return;
         }
-        if (mod && !event.repeat && /^Digit[1-4]$/.test(event.code)) {
+        if (mod && !event.repeat && /^Digit[1-5]$/.test(event.code)) {
             event.preventDefault();
-            open(FILES[Number(event.code.slice(5)) - 1].id);
+            open(CHATS[Number(event.code.slice(5)) - 1].id);
             return;
         }
         if (event.code === 'Escape' && !$('palette').hidden) {
@@ -438,10 +420,9 @@
         closePalette();
     });
     window.addEventListener('popstate', () => {
-        const file = hashFile();
-        if (!file) return;
-        if (!openTabs.includes(file)) openTabs.push(file);
-        active = file;
+        const id = hashFile();
+        if (!id) return;
+        active = id;
         sync({ history: 'none' });
     });
     const mac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test((navigator.platform || navigator.userAgent || ''));
@@ -452,6 +433,6 @@
     if (hashed) active = hashed;
     sync({ history: 'replace' });
     if (typeof ResizeObserver === 'function') new ResizeObserver(() => {
-        if (active === 'game.py' && window.Platformer.resize) window.Platformer.resize();
+        if (isGame(chatById(active)) && window.Platformer.resize) window.Platformer.resize();
     }).observe($('arcade'));
 })();
